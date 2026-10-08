@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -6,11 +8,10 @@ plugins {
 }
 
 // مفاتيح توقيع الرفع: تُقرأ من key.properties (خارج git) — لا تُنشر أبداً.
-val keystoreProperties = java.util.Properties().apply {
-    val keystoreFile = rootProject.file("key.properties")
-    if (keystoreFile.exists()) {
-        keystoreFile.inputStream().use { load(it) }
-    }
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
 android {
@@ -23,10 +24,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
     defaultConfig {
         applicationId = "com.atogamarket.atoga_customer"
         minSdk = flutter.minSdkVersion
@@ -37,10 +34,10 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String?
-            keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as String?
+            keyAlias = keystoreProperties.getProperty("keyAlias")
+            keyPassword = keystoreProperties.getProperty("keyPassword")
+            storeFile = keystoreProperties.getProperty("storeFile")?.let { path -> rootProject.file(path) }
+            storePassword = keystoreProperties.getProperty("storePassword")
         }
     }
 
@@ -49,6 +46,12 @@ android {
             // التوقيع بمفتاح رفع حقيقي (متطلب Google Play) — لا debug.
             signingConfig = signingConfigs.getByName("release")
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
