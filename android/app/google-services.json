@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "41127470588",
+    "project_id": "atoga-market",
+    "storage_bucket": "atoga-market.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41127470588:android:8939ccea49033657367e79",
+        "android_client_info": {
+          "package_name": "com.atogamarket.atoga_customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "41127470588-6mnk2av4k1sjq069siqb9idkcdpg4s78.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4Fl6wDwddWa5vRFzNUdsCgTo9kBb7r-M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "41127470588-6mnk2av4k1sjq069siqb9idkcdpg4s78.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
