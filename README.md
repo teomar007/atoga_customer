@@ -211,7 +211,8 @@ flutter build apk --release
 ## قائمة الرفع إلى Google Play
 
 1. **التوقيع**: `android/key.properties` + `android/app/upload-keystore.jks` (خارج git).
-   البناء النهائي: `flutter build appbundle --release` ثم ارفع
+   البناء النهائي (مع مفتاح الخرائط):
+   `flutter build appbundle --release --dart-define=MAPTILER_KEY=...` ثم ارفع
    `build/app/outputs/bundle/release/app-release.aab`.
 2. **سياسة الخصوصية**: رابط عام في Play Console —
    `https://teomar007.github.io/atoga_customer/docs/privacy-policy.html`
@@ -221,8 +222,8 @@ flutter build apk --release
    بلا إعلانات، بلا بيع بيانات.
 4. **استبيان التقييم العمري** + **قائمة المتجر** بالعربية والفرنسية
    (الوصف، لقطات ≥ 2 لهاتف وأخرى للوحي، شارة 512×512).
-5. **الخرائط**: استبدال `tile.openstreetmap.org` بمزوّد مرخّص (MapTiler)
-   بمفتاح عبر `--dart-define=MAPTILER_KEY=...` قبل الإطلاق.
+5. **الخرائط**: MapTiler (مفعّل): مفتاح `MAPTILER_KEY` يُمرَّر في البناء
+   (`--dart-define`) — غيابه يُرجع تلقائياً إلى OSM للتطوير.
 6. **الإشعارات**: إعداد Firebase/`google-services.json` لـ OneSignal على
    Android، وتسجيل SHA-1 لـ Google OAuth في لوحة Supabase.
 7. بعد كل تحديث: `flutter analyze` + `flutter test`، ورفع AAB جديد

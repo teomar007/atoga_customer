@@ -3,10 +3,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/map_tiler.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 
-/// خريطة OpenStreetMap لاختيار موقع التسليم.
+/// خريطة اختيار موقع التسليم: MapTiler عند توفر المفتاح، وOSM احتياطاً.
 class LocationPickerField extends StatefulWidget {
   const LocationPickerField({super.key, required this.latitude, required this.longitude, required this.onChanged, this.onRequestCurrent, this.busy = false});
 
@@ -86,8 +87,10 @@ class _LocationPickerFieldState extends State<LocationPickerField> with TickerPr
                     interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
                   ),
                   children: <Widget>[
-                    TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.atogamarket.atoga_customer', maxZoom: 19),
-                    RichAttributionWidget(attributions: <SourceAttribution>[TextSourceAttribution('OpenStreetMap contributors', onTap: () => launchUrl(Uri.parse('https://www.openstreetmap.org/copyright')))]),
+                    TileLayer(urlTemplate: _tileTemplate(), userAgentPackageName: 'com.atogamarket.atoga_customer', maxZoom: 19),
+                    RichAttributionWidget(attributions: <SourceAttribution>[
+                      TextSourceAttribution('MapTiler © OpenStreetMap contributors', onTap: () => launchUrl(Uri.parse('https://www.openstreetmap.org/copyright'))),
+                    ]),
                   ],
                 ),
                 // الدبوس ثابت في منتصف الشاشة (Center Marker).
@@ -100,6 +103,14 @@ class _LocationPickerFieldState extends State<LocationPickerField> with TickerPr
         Text(widget.latitude == null ? l10n.pinLocationHint : 'Lat: ${widget.latitude!.toStringAsFixed(5)}  •  Lng: ${widget.longitude!.toStringAsFixed(5)}', style: theme.textTheme.bodySmall),
       ],
     );
+  }
+
+  /// بلاطات MapTiler عند توفر المفتاح، وإلا خادم OSM العام (تطوير).
+  static String _tileTemplate() {
+    if (mapTilerKey.isNotEmpty) {
+      return 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=$mapTilerKey';
+    }
+    return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   }
 }
 
