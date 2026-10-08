@@ -214,9 +214,9 @@ flutter build apk --release
    البناء النهائي (مع مفتاح الخرائط):
    `flutter build appbundle --release --dart-define=MAPTILER_KEY=...` ثم ارفع
    `build/app/outputs/bundle/release/app-release.aab`.
-2. **سياسة الخصوصية**: رابط عام في Play Console —
+2. **سياسة الخصوصية**: رابط عام في Play Console (مفعّل بالفعل) —
    `https://teomar007.github.io/atoga_customer/docs/privacy-policy.html`
-   (فعّل GitHub Pages من إعدادات المستودع: الفرع `main`، المجلد `/docs`).
+   (Pages مفعّلة من الفرع `main`/الجذر، والملفات داخل `/docs`).
 3. **Data Safety** في اللوحة (مطابق للسياسة): الموقع (إذن اختياري)، رقم
    الهاتف، الاسم، العنوان، سجل الطلبات، معرّف الإشعارات (OneSignal) —
    بلا إعلانات، بلا بيع بيانات.
