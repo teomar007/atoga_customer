@@ -228,7 +228,10 @@ flutter build apk --release
    (الوصف، لقطات ≥ 2 لهاتف وأخرى للوحي، شارة 512×512).
 5. **الخرائط**: MapTiler (مفعّل): مفتاح `MAPTILER_KEY` يُمرَّر في البناء
    (`--dart-define`) — غيابه يُرجع تلقائياً إلى OSM للتطوير.
-6. **الإشعارات**: إعداد Firebase/`google-services.json` لـ OneSignal على
-   Android، وتسجيل SHA-1 لـ Google OAuth في لوحة Supabase.
+6. **الإشعارات (FCM مجاناً)**: أضف سرّ `FIREBASE_SERVICE_ACCOUNT` في
+   Supabase ← Edge Functions ← Secrets، وخزّن `service_role` في Vault باسم
+   `push_service_role` (لإرسال حالات الطلب التلقائي)، ثم عيّن الأدمن.
+   التفاصيل: `docs/push-integration.md`. وسجّل SHA-1 لـ Google OAuth
+   في لوحة Supabase إن استُخدم تسجيل جوجل.
 7. بعد كل تحديث: `flutter analyze` + `flutter test`، ورفع AAB جديد
    (versionCode تصاعدي في `pubspec.yaml`).

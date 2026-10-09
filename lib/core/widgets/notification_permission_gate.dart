@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../providers/locale_provider.dart';
-import '../services/onesignal_service.dart';
+import '../services/fcm_service.dart';
 
 /// نافذة سياقية واحدة لطلب إذن الإشعارات — **بعد تسجيل الدخول فقط**،
 /// فلا تقاطع شاشة الدخول ولا تجمّد الكيبورد أثناء الكتابة، وفق دليل OneSignal
@@ -49,7 +49,7 @@ class _NotificationPermissionGateState extends ConsumerState<NotificationPermiss
       return;
     }
     // الإذن ممنوح مسبقاً → لا شيء.
-    if (OneSignalService.instance.hasPermission) {
+    if (FcmService.instance.hasPermission) {
       _prompted = true;
       return;
     }
@@ -80,7 +80,7 @@ class _NotificationPermissionGateState extends ConsumerState<NotificationPermiss
               onPressed: () {
                 Navigator.pop(context);
                 unawaited(
-                  OneSignalService.instance.requestPermission().then((bool granted) {
+                  FcmService.instance.requestPermission().then((bool granted) {
                     prefs.setBool(_promptShownKey, granted);
                   }),
                 );

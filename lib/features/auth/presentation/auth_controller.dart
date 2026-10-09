@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/services/onesignal_service.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/providers/supabase_providers.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../domain/auth_failure.dart';
@@ -48,10 +48,10 @@ class AuthController extends Notifier<AuthStateView> {
     final AuthRepository repo = ref.watch(authRepositoryProvider);
     final CustomerUser? cached = repo.currentUser;
     _subscription = repo.authStateChanges().listen(_onUserChanged);
-    // بمجرد توفر معرّف اشتراك OneSignal (أو تغيّره) يُربط بالحساب الحالي.
-    _pushSub = pushSubscriptionIdEvents.stream.listen((String? id) {
-      if (id != null) {
-        unawaited(_syncPushSubscription(id));
+    // بمجرد توفر رمز FCM (أو تغيّره) يُربط بالحساب الحالي.
+    _pushSub = FcmService.instance.tokenEvents.listen((String? token) {
+      if (token != null && token.isNotEmpty) {
+        unawaited(_syncFcmToken(token));
       }
     });
     ref.onDispose(() => _subscription?.cancel());
@@ -118,7 +118,7 @@ class AuthController extends Notifier<AuthStateView> {
       final CustomerUser user = await ref.read(authRepositoryProvider).signInWithPassword(phone: phone, password: password);
       _adoptLanguage(user);
       state = state.copyWith(phase: AuthPhase.idle, status: AuthAuthenticated(user));
-      unawaited(_syncPushSubscriptionFromSdk());
+      unawaited(_syncFcmTokenFromSdk());
       return true;
     } on Object catch (error) {
       state = _failed(AuthPhase.idle, error);
@@ -143,7 +143,7 @@ class AuthController extends Notifier<AuthStateView> {
         notice: result.sessionReady ? 'accountCreated' : null,
       );
       if (result.sessionReady) {
-        unawaited(_syncPushSubscriptionFromSdk());
+        unawaited(_syncFcmTokenFromSdk());
       }
       return true;
     } on Object catch (error, stack) {
@@ -172,12 +172,11 @@ class AuthController extends Notifier<AuthStateView> {
   }
 
   Future<void> signOut() async {
-    // تصفير معرّف الإشعارات قبل مسح الجلسة (يحتاج المستخدم الحالي)، ثم
-    // فصل الجهاز عن OneSignal حتى لا تصله إشعارات شخصية بعد خروج صاحبه.
-    await _syncPushSubscription(null);
+    // تصفير رمز FCM قبل مسح الجلسة (يحتاج المستخدم الحالي) حتى لا تصل
+    // إشعارات شخصية لشخص آخر يستخدم نفس الهاتف.
+    await _syncFcmToken(null);
     await ref.read(authRepositoryProvider).signOut();
     state = const AuthStateView(status: AuthGuest());
-    _disconnectOneSignal();
   }
 
   /// تعديل الاسم و/أو رقم الهاتف (الهاتف اختياري).
@@ -211,7 +210,6 @@ class AuthController extends Notifier<AuthStateView> {
     try {
       await ref.read(authRepositoryProvider).deleteAccount();
       state = const AuthStateView(status: AuthGuest());
-      _disconnectOneSignal();
       return true;
     } on Object catch (error) {
       state = _failed(AuthPhase.idle, error);
@@ -219,27 +217,20 @@ class AuthController extends Notifier<AuthStateView> {
     }
   }
 
-  /// يقرأ معرّف الاشتراك من OneSignal ويحفظه (يُستدعى بعد نجاح الدخول).
-  Future<void> _syncPushSubscriptionFromSdk() async {
-    await _syncPushSubscription(OneSignalService.instance.currentSubscriptionId);
+  /// يقرأ رمز FCM الحالي ويحفظه (يُستدعى بعد نجاح الدخول).
+  Future<void> _syncFcmTokenFromSdk() async {
+    await _syncFcmToken(FcmService.instance.token);
   }
 
-  /// فصل الجهاز عن OneSignal بعد الخروج/حذف الحساب، بشكل غير منتظَر:
-  /// لا يجوز أن يعلّق قناة المنصة عملية الخروج نفسها (وفي الاختبارات لا
-  /// توجد قناة حقيقية أصلاً).
-  void _disconnectOneSignal() {
-    unawaited(OneSignalService.instance.logout());
-  }
-
-  /// يكتب المعرّف في `profiles.onesignal_id` (أو يصفّره عند الخروج).
-  Future<void> _syncPushSubscription(String? id) async {
+  /// يكتب الرمز في `profiles.fcm_token` (أو يصفّره عند الخروج).
+  Future<void> _syncFcmToken(String? token) async {
     if (state.status is! AuthAuthenticated) {
       return;
     }
     try {
-      await ref.read(authRepositoryProvider).savePushSubscriptionId(id);
+      await ref.read(authRepositoryProvider).saveFcmToken(token);
     } on Object catch (error) {
-      debugPrint('savePushSubscriptionId failed: $error');
+      debugPrint('saveFcmToken failed: $error');
     }
   }
 

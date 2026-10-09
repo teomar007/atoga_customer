@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/providers/locale_provider.dart';
 import 'core/navigation/auth_gate.dart';
+import 'core/navigation/app_navigator.dart';
 import 'core/navigation/session_sync.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/notification_permission_gate.dart';
@@ -16,6 +17,7 @@ class AtogaApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final Locale locale = ref.watch(localeControllerProvider);
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       title: 'ATOGA MARKET',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(locale),

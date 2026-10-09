@@ -165,13 +165,13 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> savePushSubscriptionId(String? onesignalId) async {
+  Future<void> saveFcmToken(String? fcmToken) async {
     final String userId = _client.auth.currentUser?.id ?? '';
     if (userId.isEmpty) {
       return;
     }
-    // upsert على عمود ممنوح وحده (onesignal_id) — لا يمسّ الرصيد وغيره.
-    await _upsertProfile(userId, <String, dynamic>{'onesignal_id': onesignalId});
+    // عمود ممنوح وحده (fcm_token) — لا يمسّ الرصيد أو is_admin.
+    await _upsertProfile(userId, <String, dynamic>{'fcm_token': fcmToken});
   }
 
   /// يحفظ حقول الملف الشخصي المتاحة بلا صلاحية UPDATE جدولية كاملة.

@@ -103,7 +103,7 @@ class _FakeAuthRepo implements AuthRepository {
   Future<void> saveLanguage(String languageCode) async => savedLanguage = languageCode;
 
   @override
-  Future<void> savePushSubscriptionId(String? onesignalId) async {}
+  Future<void> saveFcmToken(String? fcmToken) async {}
 
   @override
   Future<void> signInWithGoogle() async {}

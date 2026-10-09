@@ -56,12 +56,12 @@ abstract interface class AuthRepository {
   /// أو على جهاز آخر. الاستيراد يتم عبر قراءة الملف الشخصي.
   Future<void> saveLanguage(String languageCode);
 
-  /// يربط معرّف اشتراك OneSignal للجهاز الحالي بحساب المستخدم في
-  /// `profiles.onesignal_id` (يستهدفه تطبيق الإدارة بالإشعارات).
+  /// يربط رمز FCM للجهاز الحالي بحساب المستخدم في `profiles.fcm_token`
+  /// (يستهدفه تطبيق الإدارة بالإشعارات).
   ///
-  /// يُمرَّر `null` عند تسجيل الخروج لتصفير المعرّف حتى لا تصل إشعارات
+  /// يُمرَّر `null` عند تسجيل الخروج لتصفير الرمز حتى لا تصل إشعارات
   /// شخصية لشخص آخر يستخدم نفس الهاتف.
-  Future<void> savePushSubscriptionId(String? onesignalId);
+  Future<void> saveFcmToken(String? fcmToken);
 }
 
 /// نتيجة إنشاء الحساب: هل توجد جلسة جاهزة أم يلزم تأكيد الرقم؟

@@ -35,8 +35,6 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app_native_probe").setMethodCallHandler { call, result ->
             when (call.method) {
                 "probe" -> {
-                    val onesignal = runCatching { Class.forName("com.onesignal.OneSignal"); "ok" }
-                        .getOrElse { "missing:${it.javaClass.simpleName}" }
                     val firebase = runCatching { Class.forName("com.google.firebase.messaging.FirebaseMessaging"); "ok" }
                         .getOrElse { "missing:${it.javaClass.simpleName}" }
                     // جلب رمز FCM فعلياً وإظهار خطأ الفشل الحقيقي.
@@ -49,10 +47,10 @@ class MainActivity : FlutterActivity() {
                                 } else {
                                     "error:${task.exception?.javaClass?.simpleName}:${task.exception?.message}"
                                 }
-                                result.success("onesignalClass=$onesignal; firebase=$firebase; fcm=$fcm")
+                                result.success("firebase=$firebase; fcm=$fcm")
                             }
                     } catch (e: Exception) {
-                        result.success("onesignalClass=$onesignal; firebase=$firebase; fcm=exception:${e.message}")
+                        result.success("firebase=$firebase; fcm=exception:${e.message}")
                     }
                 }
                 else -> result.notImplemented()

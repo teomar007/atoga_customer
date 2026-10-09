@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_constants.dart';
-import '../../../core/services/onesignal_service.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/button_label.dart';
@@ -117,8 +117,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  /// أداة تشخيص مخفية: 5 نقرات على «حول التطبيق» تعرض حالة OneSignal
-  /// (الإذن/الاشتراك/رمز FCM) لتشخيص وصلو الإشعارات دون adb.
+  /// أداة تشخيص مخفية: 5 نقرات على «حول التطبيق» تعرض حالة الإشعارات
+  /// (الإذن/رمز FCM/الموضوع) لتشخيص الوصول دون adb.
   void _onVersionTap(AppLocalizations l10n) {
     _versionTapTimer?.cancel();
     _versionTaps += 1;
@@ -131,19 +131,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (BuildContext context) => StatefulBuilder(
         builder: (BuildContext context, StateSetter setDialogState) => AlertDialog(
-          title: const Text('OneSignal diagnostics'),
-          content: SingleChildScrollView(
-            child: FutureBuilder<String>(
-              future: OneSignalService.instance.nativeProbe(),
-              builder: (BuildContext context, AsyncSnapshot<String> snapshot) => SelectableText(
-                '${OneSignalService.instance.diagnosticsSummary}\nprobe: ${snapshot.data ?? "..."}',
-              ),
-            ),
-          ),
+          title: const Text('Notifications diagnostics'),
+          content: SingleChildScrollView(child: SelectableText(FcmService.instance.diagnosticsSummary)),
           actions: [
             TextButton(
               onPressed: () {
-                OneSignalService.instance.requestPermission().whenComplete(() {
+                FcmService.instance.requestPermission().whenComplete(() {
                   if (context.mounted) {
                     setDialogState(() {});
                   }
@@ -151,18 +144,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               },
               child: const Text('طلب الإذن'),
             ),
-            TextButton(
-              // غير منتظر: التعليق كان يمنع تحديث النافذة. نحدّث فوراً ثم عند العودة.
-              onPressed: () {
-                setDialogState(() {});
-                OneSignalService.instance.retryInitialize(AppConstants.onesignalAppId).whenComplete(() {
-                  if (context.mounted) {
-                    setDialogState(() {});
-                  }
-                });
-              },
-              child: const Text('إعادة تهيئة'),
-            ),
+            TextButton(onPressed: () => setDialogState(() {}), child: const Text('تحديث')),
             TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
           ],
         ),

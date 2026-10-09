@@ -4,6 +4,9 @@
 --  (لا يمكن إنشاؤه عبر مفتاح anon، بل عبر اللوحة فقط)
 -- ===================================================================
 
+-- إشعارات: استدعاء Edge Function من الـ Trigger (حالات الطلب).
+create extension if not exists pg_net;
+
 -- ---------- 1) ملف المستخدم ----------
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -14,6 +17,8 @@ create table if not exists public.profiles (
   notifications_enabled boolean not null default true,
   wallet_balance numeric not null default 0,
   onesignal_id text,
+  fcm_token text,
+  is_admin boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -491,7 +496,7 @@ begin
 end $$;
 
 revoke update on public.profiles from anon, authenticated;
-grant update (display_name, phone, language_code, theme_mode, notifications_enabled, onesignal_id)
+grant update (display_name, phone, language_code, theme_mode, notifications_enabled, onesignal_id, fcm_token)
   on public.profiles to authenticated;
 
 -- INSERT أيضاً على مستوى الأعمدة المسموحة فقط: الزبون قد يُنشئ صف
@@ -758,6 +763,42 @@ as $$
 $$;
 
 grant execute on function public.store_is_open_now() to anon, authenticated, service_role;
+
+-- ---------- 15) إشعارات FCM: إرسال تلقائي عند تغيّر حالة الطلب ----------
+-- يتطلب سرّاً داخلياً في Vault لتوقيع الاستدعاء (مفتاحك service_role):
+--   select vault.create_secret('<SERVICE_ROLE_KEY>', 'push_service_role', 'internal auth');
+-- ودالة Edge باسم send-push مع سرّ FIREBASE_SERVICE_ACCOUNT.
+create or replace function public.notify_order_status_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, net, vault
+as $$
+declare
+  v_secret text;
+begin
+  select decrypted_secret into v_secret
+    from vault.decrypted_secrets
+   where name = 'push_service_role'
+   limit 1;
+  if v_secret is null then
+    return new;
+  end if;
+  perform net.http_post(
+    url := 'https://qwiaxkrwyhdjrucnknhm.supabase.co/functions/v1/send-push',
+    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || v_secret),
+    body := jsonb_build_object('mode', 'order_status', 'order_id', new.id)
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists orders_status_push on public.orders;
+create trigger orders_status_push
+  after update of status on public.orders
+  for each row
+  when (old.status is distinct from new.status)
+  execute function public.notify_order_status_change();
 
 -- بذرة افتراضية: كل الأيام 08:00-13:00 و16:00-21:00 (قابلة للتحرير من الأدمن)
 insert into public.store_hours (day_of_week, morning_open, morning_close, evening_open, evening_close)

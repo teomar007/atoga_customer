@@ -24,6 +24,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // مطلوب لـ flutter_local_notifications (Java 8+ APIs).
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -66,6 +68,7 @@ flutter {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // WorkManager: مهمة دورية لتحديث أيقونة المتجر والتطبيق مغلق.
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     // FCM صريح (كان عبر OneSignal ضمنياً) — لجلب الرمز وتشخيص فشله.
