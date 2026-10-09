@@ -60,3 +60,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // WorkManager: مهمة دورية لتحديث أيقونة المتجر والتطبيق مغلق.
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+}

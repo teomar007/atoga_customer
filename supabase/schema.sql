@@ -732,6 +732,33 @@ create policy "Public read store hours"
 
 grant select on public.store_hours to anon, authenticated;
 
+-- حالة المتجر الآن (بتوقيت الجزائر) — مصدر حقيقة واحد للواجهة والخلفية.
+create or replace function public.store_is_open_now()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with a as (
+    select (now() at time zone 'Africa/Algiers') as ts
+  )
+  select coalesce((
+    select (
+      (h.morning_open is not null and h.morning_close is not null
+        and a.ts::time >= h.morning_open and a.ts::time < h.morning_close)
+      or
+      (h.evening_open is not null and h.evening_close is not null
+        and a.ts::time >= h.evening_open and a.ts::time < h.evening_close)
+    )
+    from public.store_hours h, a
+    where h.is_active
+      and h.day_of_week = extract(isodow from a.ts)::int
+  ), false)
+$$;
+
+grant execute on function public.store_is_open_now() to anon, authenticated, service_role;
+
 -- بذرة افتراضية: كل الأيام 08:00-13:00 و16:00-21:00 (قابلة للتحرير من الأدمن)
 insert into public.store_hours (day_of_week, morning_open, morning_close, evening_open, evening_close)
 select

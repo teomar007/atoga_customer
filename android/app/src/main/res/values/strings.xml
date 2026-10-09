@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ATOGA MARKET</string>
+    <!-- مفتاح anon قابل للنشر (يُشحن في كل نسخة من التطبيق) — للقراءة فقط + RLS. -->
+    <string name="supabase_url">https://qwiaxkrwyhdjrucnknhm.supabase.co</string>
+    <string name="supabase_anon_key">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3aWF4a3J3eWhkanJ1Y25rbmhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExOTI0NjksImV4cCI6MjEwNjc2ODQ2OX0.SGJozJfL1RVMqCsKXjnJxrb2YDqYjGrSNpy6PtfS-h4</string>
+</resources>

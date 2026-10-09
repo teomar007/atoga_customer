@@ -2,4 +2,6 @@
 <resources>
     <!-- خلفية الأيقونة التكيفية: أبيض يعكس أيقونة المشغّل الحالية -->
     <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- خلفية أيقونة «المتجر مغلق»: لون التطبيق الأحمر -->
+    <color name="ic_launcher_closed_background">#E53935</color>
 </resources>
