@@ -1943,7 +1943,7 @@ abstract class AppLocalizations {
   /// No description provided for @storeOpenStatus.
   ///
   /// In ar, this message translates to:
-  /// **'المتجر مفتوح حالياً — يمكنك الطلب'**
+  /// **'المتجر مفتوح — يمكنك الطلب'**
   String get storeOpenStatus;
 
   /// No description provided for @storeClosedStatus.

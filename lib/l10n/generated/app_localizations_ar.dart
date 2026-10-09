@@ -1017,7 +1017,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appDeveloperEmailCopied => 'تم نسخ البريد الإلكتروني بنجاح';
 
   @override
-  String get storeOpenStatus => 'المتجر مفتوح حالياً — يمكنك الطلب';
+  String get storeOpenStatus => 'المتجر مفتوح — يمكنك الطلب';
 
   @override
   String get storeClosedStatus => 'المتجر مغلق حالياً';

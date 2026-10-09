@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,7 +60,7 @@ class _NotificationPermissionGateState extends ConsumerState<NotificationPermiss
     }
     _prompted = true;
     // فجوة قصيرة حتى تستقر الصفحة الرئيسية بعد الانتقال من شاشة الدخول.
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
     if (!mounted) {
       return;
     }
@@ -73,10 +75,15 @@ class _NotificationPermissionGateState extends ConsumerState<NotificationPermiss
           content: Text(l10n.onesignalPromptBody),
           actions: [
             FilledButton(
-              onPressed: () async {
+              // غير منتظر: نُغلق نافذتنا فوراً ويظهر إذن النظام متى جهز،
+              // فلا تتجمّد الواجهة (كان await يجمّد الإحساس حتى دقيقة).
+              onPressed: () {
                 Navigator.pop(context);
-                final bool granted = await OneSignalService.instance.requestPermission();
-                await prefs.setBool(_promptShownKey, granted);
+                unawaited(
+                  OneSignalService.instance.requestPermission().then((bool granted) {
+                    prefs.setBool(_promptShownKey, granted);
+                  }),
+                );
               },
               child: Text(l10n.onesignalPromptAllow),
             ),

@@ -1034,7 +1034,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appDeveloperEmailCopied => 'Adresse e-mail copiée avec succès';
 
   @override
-  String get storeOpenStatus => 'Le magasin est ouvert — vous pouvez commander';
+  String get storeOpenStatus => 'Le magasin est ouvert — commandez';
 
   @override
   String get storeClosedStatus => 'Le magasin est fermé';

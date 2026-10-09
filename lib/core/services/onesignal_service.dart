@@ -120,12 +120,13 @@ class OneSignalService {
     }
     final bool granted = await OneSignal.Notifications.requestPermission(true);
     if (granted) {
-      // الإذن مطلوب لتسجيل الاشتراك لدى OneSignal — نؤكّد الـ opt-in فوراً.
-      try {
-        await OneSignal.User.pushSubscription.optIn();
-      } on Object catch (error) {
-        debugPrint('OneSignal optIn failed: $error');
-      }
+      // الـ opt-in غير منتظر: الـ SDK يفعّله تلقائياً بعد منح الإذن،
+      // وانتظاره كان يُطيل زمن الاستجابة في الواجهة.
+      unawaited(
+        OneSignal.User.pushSubscription.optIn().catchError((Object error) {
+          debugPrint('OneSignal optIn failed: $error');
+        }),
+      );
       _log.add('permission:granted');
       _emit(currentSubscriptionId);
     } else {

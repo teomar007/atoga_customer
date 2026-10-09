@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/auto_marquee_text.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../store_status_provider.dart';
 
@@ -45,11 +46,10 @@ class _StoreStatusIndicatorState extends ConsumerState<StoreStatusIndicator> wit
           ),
         ),
         const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        // نص متحرك عند تجاوز المساحة بدل الاقتطاع.
+        Expanded(
+          child: AutoMarqueeText(
+            text: label,
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12.5),
           ),
         ),
