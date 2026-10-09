@@ -55,6 +55,20 @@ class OneSignalService {
   /// رمز FCM للجهاز — وجوده شرط التسجيل لدى OneSignal وخوادم الإرسال.
   String? get pushToken => isTestEnvironment ? null : OneSignal.User.pushSubscription.token;
 
+  /// هل الجهاز مشترك فعلاً (opt-in) في الإشعارات؟
+  bool get optedIn => isTestEnvironment ? false : (OneSignal.User.pushSubscription.optedIn ?? false);
+
+  /// ملخص تشخيصي يُعرض داخل التطبيق (أداة دعم مخفية).
+  String get diagnosticsSummary {
+    if (isTestEnvironment) {
+      return 'test environment';
+    }
+    return 'permission: $hasPermission\n'
+        'optedIn: $optedIn\n'
+        'subscriptionId: $currentSubscriptionId\n'
+        'fcmToken: ${pushToken ?? "(null)"}';
+  }
+
   /// طلب إذن الإشعارات — يُستدعى من زر النافذة السياقية فقط (وفق الدليل).
   Future<bool> requestPermission() async {
     if (isTestEnvironment) {

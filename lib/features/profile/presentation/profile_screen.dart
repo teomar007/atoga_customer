@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/onesignal_service.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/button_label.dart';
@@ -34,6 +37,15 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  int _versionTaps = 0;
+  Timer? _versionTapTimer;
+
+  @override
+  void dispose() {
+    _versionTapTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
@@ -95,13 +107,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _GroupLabel(text: l10n.settings),
           _Tile(icon: Icons.privacy_tip_outlined, title: l10n.privacyPolicy, onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const PrivacyPolicyScreen()))),
           _Tile(icon: Icons.gavel_rounded, title: l10n.termsOfService, onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const TermsOfServiceScreen()))),
-          _Tile(icon: Icons.info_outline_rounded, title: l10n.aboutApp, trailing: l10n.appVersion(AppConstants.appVersion)),
+          _Tile(icon: Icons.info_outline_rounded, title: l10n.aboutApp, trailing: l10n.appVersion(AppConstants.appVersion), onTap: () => _onVersionTap(l10n)),
           const SizedBox(height: 22),
           SizedBox(width: double.infinity, child: OutlinedButton.icon(style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger, side: const BorderSide(color: AppColors.danger)), icon: const Icon(Icons.logout_rounded, size: 18), label: ButtonLabel(l10n.logout), onPressed: () => ref.read(authControllerProvider.notifier).signOut())),
           const SizedBox(height: 10),
           // شرط Google Play: زر واضح باللون الأحمر لحذف الحساب نهائياً.
           SizedBox(width: double.infinity, child: FilledButton.icon(style: FilledButton.styleFrom(backgroundColor: AppColors.danger), icon: const Icon(Icons.delete_forever_rounded, size: 20), label: ButtonLabel(l10n.deleteAccount), onPressed: () => _deleteAccount(context, l10n))),
         ],
+    );
+  }
+
+  /// أداة تشخيص مخفية: 5 نقرات على «حول التطبيق» تعرض حالة OneSignal
+  /// (الإذن/الاشتراك/رمز FCM) لتشخيص وصلو الإشعارات دون adb.
+  void _onVersionTap(AppLocalizations l10n) {
+    _versionTapTimer?.cancel();
+    _versionTaps += 1;
+    _versionTapTimer = Timer(const Duration(seconds: 2), () => _versionTaps = 0);
+    if (_versionTaps < 5) {
+      return;
+    }
+    _versionTaps = 0;
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('OneSignal diagnostics'),
+        content: SelectableText(OneSignalService.instance.diagnosticsSummary),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel))],
+      ),
     );
   }
 
