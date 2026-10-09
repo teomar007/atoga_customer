@@ -1,8 +1,10 @@
 package com.atogamarket.atoga_customer
 
 import android.os.Bundle
+import androidx.work.ExistingWorkPolicy
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -15,18 +17,20 @@ class MainActivity : FlutterActivity() {
         scheduleStoreIconSync()
     }
 
+    override fun onStart() {
+        super.onStart()
+        AppForegroundTracker.isForeground = true
+    }
+
+    override fun onStop() {
+        AppForegroundTracker.isForeground = false
+        // تحديث الأيقونة فور مغادرة التطبيق (آمن في الخلفية).
+        enqueueIconSyncNow()
+        super.onStop()
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        // قناة تبديل أيقونة المتجر (مفتوح/مغلق) من طبقة Dart.
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app_icon").setMethodCallHandler { call, result ->
-            when (call.method) {
-                "setStoreOpen" -> {
-                    AppIconController.setStoreOpen(this, call.argument<Boolean>("open") ?: true)
-                    result.success(true)
-                }
-                else -> result.notImplemented()
-            }
-        }
         // تشخيص: هل فئات OneSignal/Firebase موجودة فعلاً بعد R8؟
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app_native_probe").setMethodCallHandler { call, result ->
             when (call.method) {
@@ -66,5 +70,13 @@ class MainActivity : FlutterActivity() {
             ExistingPeriodicWorkPolicy.KEEP,
             request,
         )
+    }
+
+    /** مهمة لمرة واحدة فور مغادرة التطبيق لتحديث الأيقونة بأمان. */
+    private fun enqueueIconSyncNow() {
+        val request = OneTimeWorkRequestBuilder<StoreIconWorker>()
+            .setInitialDelay(3, TimeUnit.SECONDS)
+            .build()
+        WorkManager.getInstance(this).enqueueUniqueWork("store_icon_sync_now", ExistingWorkPolicy.REPLACE, request)
     }
 }

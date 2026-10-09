@@ -1,16 +1,16 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../features/auth/presentation/auth_controller.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../providers/locale_provider.dart';
 import '../services/onesignal_service.dart';
 
-/// نافذة سياقية واحدة لطلب إذن الإشعارات: تظهر مرة واحدة (لكل تثبيت)
-/// عند وصول معرّف اشتراك حقيقي أو بعد مهلة قصيرة كاحتياط إن تأخر التسجيل،
-/// وتشرح الفائدة قبل فتح نافذة النظام — الطلب يقع من زر النافذة فقط.
+/// نافذة سياقية واحدة لطلب إذن الإشعارات — **بعد تسجيل الدخول فقط**،
+/// فلا تقاطع شاشة الدخول ولا تجمّد الكيبورد أثناء الكتابة، وفق دليل OneSignal
+/// (الطلب يقع من زر النافذة، لا عند الإقلاع). تُعرض مرة واحدة لكل تثبيت
+/// ولا تُعلَّم «ظُهرت» إلا عند منح الإذن فعلاً.
 class NotificationPermissionGate extends ConsumerStatefulWidget {
   const NotificationPermissionGate({super.key, required this.child});
 
@@ -23,50 +23,42 @@ class NotificationPermissionGate extends ConsumerStatefulWidget {
 class _NotificationPermissionGateState extends ConsumerState<NotificationPermissionGate> {
   static const String _promptShownKey = 'onesignal_prompt_shown';
 
-  StreamSubscription<String?>? _subscription;
-  Timer? _fallbackTimer;
   bool _prompted = false;
 
   @override
   void initState() {
     super.initState();
-    _subscription = pushSubscriptionIdEvents.stream.listen(_maybePrompt);
-    // قد يكون المعرّف جاهزاً قبل تسجيل المستمع — تقييم فوري.
-    _maybePrompt(OneSignalService.instance.currentSubscriptionId);
-    // احتياط: حتى لو تأخّر تسجيل الجهاز (FCM)، نطلب الإذن بعد مهلة قصيرة
-    // مرة واحدة — الإذن مطلوب لعرض الإشعارات وليس رهينة وصول المعرّف.
-    _fallbackTimer = Timer(const Duration(seconds: 6), _showOnce);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybePrompt());
   }
 
   @override
-  void dispose() {
-    _subscription?.cancel();
-    _fallbackTimer?.cancel();
-    super.dispose();
+  Widget build(BuildContext context) {
+    // ننتظر نجاح تسجيل الدخول ثم نعرض النافذة (بلا مقاطعة للكتابة).
+    ref.listen<bool>(isSignedInProvider, (bool? previous, bool next) {
+      if (next) {
+        _maybePrompt();
+      }
+    });
+    return widget.child;
   }
 
-  void _maybePrompt(String? id) {
-    if (OneSignalService.isRealSubscriptionId(id)) {
-      _showOnce();
-    }
-  }
-
-  Future<void> _showOnce() async {
-    if (_prompted) {
+  Future<void> _maybePrompt() async {
+    if (_prompted || !ref.read(isSignedInProvider)) {
       return;
     }
-    // إن كان الإذن ممنوحاً مسبقاً (من الإعدادات) لا نعرض شيئاً.
+    // الإذن ممنوح مسبقاً → لا شيء.
     if (OneSignalService.instance.hasPermission) {
       _prompted = true;
       return;
     }
-    _prompted = true;
     final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
-    // نعتبره «ظُهرت» فقط إن كان الإذن ممنوحاً؛ وإلا نعيد المحاولة لاحقاً
-    // حتى يُمنح فعلاً (كان الخلل: علّمناها قبل الطلب فيُحجب الطلب للأبد).
-    if ((prefs.getBool(_promptShownKey) ?? false) && OneSignalService.instance.hasPermission) {
+    if (prefs.getBool(_promptShownKey) ?? false) {
+      _prompted = true;
       return;
     }
+    _prompted = true;
+    // فجوة قصيرة حتى تستقر الصفحة الرئيسية بعد الانتقال من شاشة الدخول.
+    await Future<void>.delayed(const Duration(milliseconds: 700));
     if (!mounted) {
       return;
     }
@@ -93,7 +85,4 @@ class _NotificationPermissionGateState extends ConsumerState<NotificationPermiss
       },
     );
   }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }

@@ -17,9 +17,10 @@ abstract final class LocationService {
   static Future<LocationOutcome> ensurePermission({required BuildContext context}) async {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final bool accepted = await _askWithExplanation(context, l10n);
-    if (accepted) {
-      return LocationOutcome.granted;
+    if (!accepted) {
+      return LocationOutcome.denied;
     }
+    // موافقة الشرح لا تعني منح النظام: نطلب الإذن الفعلي دائماً بعده.
     if (!await Geolocator.isLocationServiceEnabled()) {
       return LocationOutcome.serviceDisabled;
     }
@@ -30,7 +31,8 @@ abstract final class LocationService {
     if (permission == LocationPermission.deniedForever) {
       return LocationOutcome.deniedForever;
     }
-    return permission == LocationPermission.denied ? LocationOutcome.denied : LocationOutcome.granted;
+    final bool granted = permission == LocationPermission.whileInUse || permission == LocationPermission.always;
+    return granted ? LocationOutcome.granted : LocationOutcome.denied;
   }
 
   /// نافذة سبقية إلزامية قبل طلب النظام (شرط Google Play).
@@ -49,13 +51,25 @@ abstract final class LocationService {
 
   /// يقرأ الموقع الحالي ثم يحوّله إلى عنوان (Reverse Geocoding) بلغة التطبيق.
   static Future<({double lat, double lng, ReverseGeocodeResult? place})?> currentPlace({String languageCode = 'ar'}) async {
+    // قراءة الموقع: مهلة أوسع (التثبيت الأول قد يطول) ثم الرجوع لآخر موقع معروف.
+    Position? position;
     try {
-      final Position position = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 15)));
-      final ReverseGeocodeResult? place = await NominatimGeocoder.reverse(lat: position.latitude, lng: position.longitude, languageCode: languageCode);
-      return (lat: position.latitude, lng: position.longitude, place: place);
-    } on Object {
+      position = await Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 30)));
+    } on Object catch (error) {
+      debugPrint('getCurrentPosition failed: $error');
+    }
+    position ??= await Geolocator.getLastKnownPosition();
+    if (position == null) {
       return null;
     }
+    // العنوان العكسي تجميلي: فشله لا يمنع تثبيت الدبوس على الإحداثيات.
+    ReverseGeocodeResult? place;
+    try {
+      place = await NominatimGeocoder.reverse(lat: position.latitude, lng: position.longitude, languageCode: languageCode);
+    } on Object catch (error) {
+      debugPrint('reverse geocode failed: $error');
+    }
+    return (lat: position.latitude, lng: position.longitude, place: place);
   }
 
   /// يعرض رسالة مناسبة حسب نتيجة الإذن.

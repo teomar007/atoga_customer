@@ -14,6 +14,10 @@ import java.net.URL
  */
 class StoreIconWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        // التطبيق مفتوح: لا نبدّل الأيقونة الآن (تفادي إغلاق المهمة).
+        if (AppForegroundTracker.isForeground) {
+            return@withContext Result.success()
+        }
         try {
             val base = applicationContext.getString(R.string.supabase_url)
             val key = applicationContext.getString(R.string.supabase_anon_key)
