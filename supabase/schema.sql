@@ -198,7 +198,13 @@ create index if not exists products_created_idx on public.products (created_at d
 create index if not exists addresses_user_idx on public.addresses (user_id);
 
 -- ---------- 8) تفعيل التتبع الحي (Realtime) ----------
-alter publication supabase_realtime add table public.orders;
+-- محرّز: إعادة تنفيذ الملف لا تتوقف عند "already a member".
+do $$
+begin
+  alter publication supabase_realtime add table public.orders;
+exception when others then
+  null;
+end $$;
 
 -- ---------- 9) Row Level Security ----------
 alter table public.profiles     enable row level security;
@@ -765,9 +771,26 @@ $$;
 grant execute on function public.store_is_open_now() to anon, authenticated, service_role;
 
 -- ---------- 15) إشعارات FCM: إرسال تلقائي عند تغيّر حالة الطلب ----------
--- يتطلب سرّاً داخلياً في Vault لتوقيع الاستدعاء (مفتاحك service_role):
+-- الأسرار في Vault (تُنفَّذ مرة واحدة):
 --   select vault.create_secret('<SERVICE_ROLE_KEY>', 'push_service_role', 'internal auth');
--- ودالة Edge باسم send-push مع سرّ FIREBASE_SERVICE_ACCOUNT.
+--   select vault.create_secret('<ANON_KEY>', 'push_anon_key', 'public jwt for platform check');
+--   select vault.create_secret('<sb_secret_INTERNAL>', 'push_internal_secret', 'send-push internal secret');
+-- ودالة Edge باسم send-push مع سرّ FIREBASE_SERVICE_ACCOUNT (مفتاح خدمة Firebase).
+
+-- السرّ الداخلي لخدمة send-push فقط (service_role).
+create or replace function public.push_internal_secret()
+returns text
+language sql
+stable
+security definer
+set search_path = vault
+as $$
+  select decrypted_secret from vault.decrypted_secrets where name = 'push_internal_secret' limit 1
+$$;
+
+revoke all on function public.push_internal_secret() from public, anon, authenticated;
+grant execute on function public.push_internal_secret() to service_role;
+
 create or replace function public.notify_order_status_change()
 returns trigger
 language plpgsql
@@ -775,18 +798,26 @@ security definer
 set search_path = public, net, vault
 as $$
 declare
-  v_secret text;
+  v_internal text;
+  v_anon text;
+  v_service text;
+  v_headers jsonb := jsonb_build_object('Content-Type', 'application/json');
 begin
-  select decrypted_secret into v_secret
-    from vault.decrypted_secrets
-   where name = 'push_service_role'
-   limit 1;
-  if v_secret is null then
+  select decrypted_secret into v_internal from vault.decrypted_secrets where name = 'push_internal_secret' limit 1;
+  select decrypted_secret into v_anon from vault.decrypted_secrets where name = 'push_anon_key' limit 1;
+  select decrypted_secret into v_service from vault.decrypted_secrets where name = 'push_service_role' limit 1;
+  if v_internal is null then
     return new;
+  end if;
+  v_headers := v_headers || jsonb_build_object('x-internal-secret', v_internal);
+  if v_service is not null then
+    v_headers := v_headers || jsonb_build_object('Authorization', 'Bearer ' || v_service);
+  elsif v_anon is not null then
+    v_headers := v_headers || jsonb_build_object('Authorization', 'Bearer ' || v_anon);
   end if;
   perform net.http_post(
     url := 'https://qwiaxkrwyhdjrucnknhm.supabase.co/functions/v1/send-push',
-    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || v_secret),
+    headers := v_headers,
     body := jsonb_build_object('mode', 'order_status', 'order_id', new.id)
   );
   return new;

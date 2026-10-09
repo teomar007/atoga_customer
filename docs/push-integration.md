@@ -15,13 +15,17 @@ Supabase ← **Edge Functions ← Secrets** باسم:
 FIREBASE_SERVICE_ACCOUNT = <محتوى ملف JSON كاملاً>
 ```
 
-### ب) سرّ الاستدعاء الداخلي (للـ Trigger)
-استبدل `<SERVICE_ROLE_KEY>` بمفتاح service_role من
-Supabase ← Settings ← API ← `service_role`، ونفّذ في SQL Editor:
-
+### ب) أسرار Vault (للـ Trigger) — تُنفَّذ مرة واحدة في SQL Editor
 ```sql
-select vault.create_secret('<SERVICE_ROLE_KEY>', 'push_service_role', 'internal auth for send-push');
+-- مفتاح anon العام (لتجاوز بوابة JWT في Supabase فقط)
+select vault.create_secret('<ANON_KEY>', 'push_anon_key', 'public jwt for platform check');
+-- السرّ الداخلي (sb_secret_…) الذي تتحقق به send-push من الطلب الداخلي
+select vault.create_secret('<sb_secret_INTERNAL>', 'push_internal_secret', 'send-push internal secret');
+-- اختياري: مفتاح service_role (يُرسل كـ Bearer بدل anon عند توفره)
+select vault.create_secret('<SERVICE_ROLE_KEY>', 'push_service_role', 'internal auth');
 ```
+> ملاحظة: `send-push` تقبل الطلب الداخلي عبر ترويسة `x-internal-secret`
+> المطابقة للسرّ المخزّن في Vault، أو عبر JWT بدور `service_role`.
 
 ### ج) تعيين أدمن
 بعد إنشاء حساب الأدمن وتسجيله في التطبيق:

@@ -6,7 +6,8 @@
 // (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / SUPABASE_ANON_KEY تُحقن تلقائياً)
 //
 // التصريح:
-//   - service_role (الطلبات الداخلية/الخادم) يمرّ.
+//   - ترويسة x-internal-secret مطابقة للسرّ في Vault (الطلبات الداخلية).
+//   - أو JWT بدور service_role (الخادم).
 //   - أو مستخدم مسجّل بعلم profiles.is_admin = true.
 //
 // النشر: supabase functions deploy send-push
@@ -45,11 +46,17 @@ Deno.serve(async (req) => {
   }
   try {
     const authHeader = req.headers.get('Authorization') ?? '';
+    const internalHeader = req.headers.get('x-internal-secret') ?? '';
     const role = jwtRole(authHeader);
     const admin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 
-    // التصريح: service_role، أو مستخدم بعلم is_admin.
-    if (role !== 'service_role') {
+    // التصريح: السرّ الداخلي، أو service_role، أو مستخدم بعلم is_admin.
+    let authorized = role === 'service_role';
+    if (!authorized && internalHeader) {
+      const { data: secret } = await admin.rpc('push_internal_secret');
+      authorized = typeof secret === 'string' && secret.length > 0 && secret === internalHeader;
+    }
+    if (!authorized) {
       const sub = jwtSub(authHeader);
       if (!sub) {
         return json({ error: 'not_authenticated' }, 401);
