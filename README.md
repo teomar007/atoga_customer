@@ -217,6 +217,10 @@ flutter build apk --release
 2. **سياسة الخصوصية**: رابط عام في Play Console (مفعّل بالفعل) —
    `https://teomar007.github.io/atoga_customer/docs/privacy-policy.html`
    (Pages مفعّلة من الفرع `main`/الجذر، والملفات داخل `/docs`).
+   روابط إضافية للوحة: حذف الحساب
+   `https://teomar007.github.io/atoga_customer/docs/account-deletion.html`
+   ودليل النشر الكامل (نصوص/بيانات/إجابات):
+   `https://teomar007.github.io/atoga_customer/docs/store-listing.html`.
 3. **Data Safety** في اللوحة (مطابق للسياسة): الموقع (إذن اختياري)، رقم
    الهاتف، الاسم، العنوان، سجل الطلبات، معرّف الإشعارات (OneSignal) —
    بلا إعلانات، بلا بيع بيانات.
