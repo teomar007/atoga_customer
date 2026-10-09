@@ -62,10 +62,11 @@ class _NotificationPermissionGateState extends ConsumerState<NotificationPermiss
     }
     _prompted = true;
     final SharedPreferences prefs = ref.read(sharedPreferencesProvider);
-    if (prefs.getBool(_promptShownKey) ?? false) {
+    // نعتبره «ظُهرت» فقط إن كان الإذن ممنوحاً؛ وإلا نعيد المحاولة لاحقاً
+    // حتى يُمنح فعلاً (كان الخلل: علّمناها قبل الطلب فيُحجب الطلب للأبد).
+    if ((prefs.getBool(_promptShownKey) ?? false) && OneSignalService.instance.hasPermission) {
       return;
     }
-    await prefs.setBool(_promptShownKey, true);
     if (!mounted) {
       return;
     }
@@ -80,9 +81,10 @@ class _NotificationPermissionGateState extends ConsumerState<NotificationPermiss
           content: Text(l10n.onesignalPromptBody),
           actions: [
             FilledButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                OneSignalService.instance.requestPermission();
+                final bool granted = await OneSignalService.instance.requestPermission();
+                await prefs.setBool(_promptShownKey, granted);
               },
               child: Text(l10n.onesignalPromptAllow),
             ),

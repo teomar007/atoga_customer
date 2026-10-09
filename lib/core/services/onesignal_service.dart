@@ -118,7 +118,20 @@ class OneSignalService {
     if (isTestEnvironment) {
       return false;
     }
-    return OneSignal.Notifications.requestPermission(true);
+    final bool granted = await OneSignal.Notifications.requestPermission(true);
+    if (granted) {
+      // الإذن مطلوب لتسجيل الاشتراك لدى OneSignal — نؤكّد الـ opt-in فوراً.
+      try {
+        await OneSignal.User.pushSubscription.optIn();
+      } on Object catch (error) {
+        debugPrint('OneSignal optIn failed: $error');
+      }
+      _log.add('permission:granted');
+      _emit(currentSubscriptionId);
+    } else {
+      _log.add('permission:denied');
+    }
+    return granted;
   }
 
   /// فصل الجهاز عن OneSignal عند الخروج/حذف الحساب.

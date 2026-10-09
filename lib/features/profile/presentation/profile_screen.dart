@@ -142,6 +142,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           actions: [
             TextButton(
+              onPressed: () {
+                OneSignalService.instance.requestPermission().whenComplete(() {
+                  if (context.mounted) {
+                    setDialogState(() {});
+                  }
+                });
+              },
+              child: const Text('طلب الإذن'),
+            ),
+            TextButton(
               // غير منتظر: التعليق كان يمنع تحديث النافذة. نحدّث فوراً ثم عند العودة.
               onPressed: () {
                 setDialogState(() {});
