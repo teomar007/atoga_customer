@@ -1952,6 +1952,24 @@ abstract class AppLocalizations {
   /// **'المتجر مغلق حالياً'**
   String get storeClosedStatus;
 
+  /// No description provided for @onesignalPromptTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تفعيل الإشعارات'**
+  String get onesignalPromptTitle;
+
+  /// No description provided for @onesignalPromptBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'نود إرسال إشعارات إليك لتأكيد طلباتك ومتابعة حالة التوصيل.'**
+  String get onesignalPromptBody;
+
+  /// No description provided for @onesignalPromptAllow.
+  ///
+  /// In ar, this message translates to:
+  /// **'السماح'**
+  String get onesignalPromptAllow;
+
   /// No description provided for @walletUserId.
   ///
   /// In ar, this message translates to:

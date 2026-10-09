@@ -338,6 +338,9 @@
   "appDeveloperEmailCopied": "Adresse e-mail copiée avec succès",
   "storeOpenStatus": "Le magasin est ouvert — vous pouvez commander",
   "storeClosedStatus": "Le magasin est fermé",
+  "onesignalPromptTitle": "Activer les notifications",
+  "onesignalPromptBody": "Nous souhaitons vous envoyer des notifications pour confirmer vos commandes et suivre la livraison.",
+  "onesignalPromptAllow": "Autoriser",
   "walletUserId": "ID utilisateur (pour recharger en boutique)",
   "walletUserIdCopied": "ID utilisateur copié avec succès",
   "storeClosedAddToCart": "Le magasin est fermé — ajout au panier indisponible"

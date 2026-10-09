@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 
+import '../../../core/services/onesignal_service.dart';
 import '../../../core/providers/supabase_providers.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../domain/auth_failure.dart';
@@ -222,34 +221,15 @@ class AuthController extends Notifier<AuthStateView> {
 
   /// يقرأ معرّف الاشتراك من OneSignal ويحفظه (يُستدعى بعد نجاح الدخول).
   Future<void> _syncPushSubscriptionFromSdk() async {
-    if (_isTestEnvironment) {
-      return;
-    }
-    try {
-      await _syncPushSubscription(OneSignal.User.pushSubscription.id);
-    } on Object catch (error) {
-      debugPrint('read OneSignal push subscription failed: $error');
-    }
+    await _syncPushSubscription(OneSignalService.instance.currentSubscriptionId);
   }
 
   /// فصل الجهاز عن OneSignal بعد الخروج/حذف الحساب، بشكل غير منتظَر:
   /// لا يجوز أن يعلّق قناة المنصة عملية الخروج نفسها (وفي الاختبارات لا
   /// توجد قناة حقيقية أصلاً).
   void _disconnectOneSignal() {
-    if (_isTestEnvironment) {
-      return;
-    }
-    unawaited(() async {
-      try {
-        await OneSignal.logout();
-      } on Object catch (error) {
-        debugPrint('OneSignal.logout failed: $error');
-      }
-    }());
+    unawaited(OneSignalService.instance.logout());
   }
-
-  /// بيئة flutter test: لا توجد قناة منصة OneSignal حقيقية فتتعطل عملياتها.
-  static bool get _isTestEnvironment => Platform.environment['FLUTTER_TEST'] == 'true';
 
   /// يكتب المعرّف في `profiles.onesignal_id` (أو يصفّره عند الخروج).
   Future<void> _syncPushSubscription(String? id) async {
@@ -289,8 +269,3 @@ final isSignedInProvider = Provider<bool>((Ref ref) => ref.watch(currentUserProv
 /// **بوابة الطلب**: رقم الهاتف مطلوب لإتمام أي طلب توصيل.
 /// مصدر الحقيقة هو جدول `profiles` (وليس Auth)، لأن الهاتف اختياري there.
 final hasDeliveryPhoneProvider = Provider<bool>((Ref ref) => ref.watch(currentUserProvider)?.hasPhone ?? false);
-
-/// بثّ معرّف اشتراك OneSignal: يملؤه `main.dart` بعد نجاح التهيئة، ويستمع
-/// إليه [AuthController] لربطه بالحساب فور توفره — دون لمس حزمة OneSignal
-/// داخل بيئة الاختبار (لا init هناك).
-final StreamController<String?> pushSubscriptionIdEvents = StreamController<String?>.broadcast();

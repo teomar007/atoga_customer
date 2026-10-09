@@ -1023,6 +1023,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get storeClosedStatus => 'المتجر مغلق حالياً';
 
   @override
+  String get onesignalPromptTitle => 'تفعيل الإشعارات';
+
+  @override
+  String get onesignalPromptBody =>
+      'نود إرسال إشعارات إليك لتأكيد طلباتك ومتابعة حالة التوصيل.';
+
+  @override
+  String get onesignalPromptAllow => 'السماح';
+
+  @override
   String get walletUserId => 'معرّف المستخدم (لشحن الرصيد من المتجر)';
 
   @override

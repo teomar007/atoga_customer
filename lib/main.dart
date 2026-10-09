@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,8 +11,8 @@ import 'core/config/supabase_config.dart';
 import 'core/providers/locale_provider.dart';
 import 'core/providers/supabase_providers.dart';
 import 'core/services/cart_storage.dart';
+import 'core/services/onesignal_service.dart';
 import 'core/services/secure_local_storage.dart';
-import 'features/auth/presentation/auth_controller.dart';
 import 'features/cart/presentation/cart_controller.dart';
 
 Future<void> main() async {
@@ -30,18 +29,11 @@ Future<void> main() async {
   runApp(ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(prefs), cartStorageProvider.overrideWithValue(CartStorage(cartBox)), supabaseClientProvider.overrideWithValue(Supabase.instance.client)], child: const AtogaApp()));
 }
 
-/// تهيئة OneSignal وطلب إذن الإشعارات، ثم ربط أي معرّف اشتراك يصل بالحساب
-/// الحالي عبر [pushSubscriptionIdEvents] (يستمع إليه AuthController).
-///
-/// الفشل هنا ليس قاتلاً: يتوجّه التطبيق بلا إشعارات والميزة تعود عند
-/// توفر الشبكة/الإعدادات الصحيحة.
+/// تهيئة OneSignal عبر الخدمة المركزية (بلا طلب إذن عند الإقلاع — الطلب
+/// يقع من النافذة السياقية بعد وصول معرّف حقيقي، وفق دليل الدمج الرسمي).
 Future<void> _initOneSignal() async {
   try {
-    await OneSignal.initialize(AppConstants.onesignalAppId);
-    await OneSignal.Notifications.requestPermission(true);
-    OneSignal.User.pushSubscription.addObserver((OSPushSubscriptionChangedState state) {
-      pushSubscriptionIdEvents.add(state.current.id);
-    });
+    await OneSignalService.instance.initialize(AppConstants.onesignalAppId);
   } on Object catch (error) {
     debugPrint('OneSignal initialization failed: $error');
   }

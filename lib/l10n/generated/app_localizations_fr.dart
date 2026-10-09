@@ -1040,6 +1040,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get storeClosedStatus => 'Le magasin est fermé';
 
   @override
+  String get onesignalPromptTitle => 'Activer les notifications';
+
+  @override
+  String get onesignalPromptBody =>
+      'Nous souhaitons vous envoyer des notifications pour confirmer vos commandes et suivre la livraison.';
+
+  @override
+  String get onesignalPromptAllow => 'Autoriser';
+
+  @override
   String get walletUserId => 'ID utilisateur (pour recharger en boutique)';
 
   @override

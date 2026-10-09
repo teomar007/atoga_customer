@@ -6,6 +6,7 @@ import 'core/providers/locale_provider.dart';
 import 'core/navigation/auth_gate.dart';
 import 'core/navigation/session_sync.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/notification_permission_gate.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class AtogaApp extends ConsumerWidget {
@@ -21,8 +22,8 @@ class AtogaApp extends ConsumerWidget {
       locale: locale,
       supportedLocales: AppLocales.supported,
       localizationsDelegates: const <LocalizationsDelegate<dynamic>>[AppLocalizations.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
-      // مزامنة الجلسة تحيط بالبوابة: ترى كل تغيير حالة مصادقة قبل الرسم.
-      home: const SessionSync(child: AuthGate()),
+      // بوابة الإشعارات (نافذة الإذن السياقية) ثم مزامنة الجلسة والبوابة.
+      home: const NotificationPermissionGate(child: SessionSync(child: AuthGate())),
       builder: (BuildContext context, Widget? child) {
         // ثبات قياس الخط بغض النظر عن حجم خط النظام (سلامة التخطيط).
         final MediaQueryData media = MediaQuery.of(context);

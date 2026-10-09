@@ -338,6 +338,9 @@
   "appDeveloperEmailCopied": "تم نسخ البريد الإلكتروني بنجاح",
   "storeOpenStatus": "المتجر مفتوح حالياً — يمكنك الطلب",
   "storeClosedStatus": "المتجر مغلق حالياً",
+  "onesignalPromptTitle": "تفعيل الإشعارات",
+  "onesignalPromptBody": "نود إرسال إشعارات إليك لتأكيد طلباتك ومتابعة حالة التوصيل.",
+  "onesignalPromptAllow": "السماح",
   "walletUserId": "معرّف المستخدم (لشحن الرصيد من المتجر)",
   "walletUserIdCopied": "تم نسخ معرّف المستخدم بنجاح",
   "storeClosedAddToCart": "المتجر مغلق حالياً — لا يمكن إضافة المنتجات إلى السلة"
