@@ -9,8 +9,8 @@ import '../providers/locale_provider.dart';
 import '../services/onesignal_service.dart';
 
 /// نافذة سياقية واحدة لطلب إذن الإشعارات: تظهر مرة واحدة (لكل تثبيت)
-/// عند وصول معرّف اشتراك حقيقي، وتشرح الفائدة قبل فتح نافذة النظام —
-/// وفق دليل OneSignal (الطلب يتم من زر النافذة فقط، لا عند الإقلاع).
+/// عند وصول معرّف اشتراك حقيقي أو بعد مهلة قصيرة كاحتياط إن تأخر التسجيل،
+/// وتشرح الفائدة قبل فتح نافذة النظام — الطلب يقع من زر النافذة فقط.
 class NotificationPermissionGate extends ConsumerStatefulWidget {
   const NotificationPermissionGate({super.key, required this.child});
 
@@ -24,6 +24,7 @@ class _NotificationPermissionGateState extends ConsumerState<NotificationPermiss
   static const String _promptShownKey = 'onesignal_prompt_shown';
 
   StreamSubscription<String?>? _subscription;
+  Timer? _fallbackTimer;
   bool _prompted = false;
 
   @override
@@ -32,16 +33,31 @@ class _NotificationPermissionGateState extends ConsumerState<NotificationPermiss
     _subscription = pushSubscriptionIdEvents.stream.listen(_maybePrompt);
     // قد يكون المعرّف جاهزاً قبل تسجيل المستمع — تقييم فوري.
     _maybePrompt(OneSignalService.instance.currentSubscriptionId);
+    // احتياط: حتى لو تأخّر تسجيل الجهاز (FCM)، نطلب الإذن بعد مهلة قصيرة
+    // مرة واحدة — الإذن مطلوب لعرض الإشعارات وليس رهينة وصول المعرّف.
+    _fallbackTimer = Timer(const Duration(seconds: 6), _showOnce);
   }
 
   @override
   void dispose() {
     _subscription?.cancel();
+    _fallbackTimer?.cancel();
     super.dispose();
   }
 
-  Future<void> _maybePrompt(String? id) async {
-    if (_prompted || !OneSignalService.isRealSubscriptionId(id)) {
+  void _maybePrompt(String? id) {
+    if (OneSignalService.isRealSubscriptionId(id)) {
+      _showOnce();
+    }
+  }
+
+  Future<void> _showOnce() async {
+    if (_prompted) {
+      return;
+    }
+    // إن كان الإذن ممنوحاً مسبقاً (من الإعدادات) لا نعرض شيئاً.
+    if (OneSignalService.instance.hasPermission) {
+      _prompted = true;
       return;
     }
     _prompted = true;

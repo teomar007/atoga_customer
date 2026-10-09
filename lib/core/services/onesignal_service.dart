@@ -38,11 +38,22 @@ class OneSignalService {
       return;
     }
     _initialized = true;
+    // سجلّ مفصّل في وضع التطوير لتشخيص التسجيل (FCM token / id / permission).
+    if (kDebugMode) {
+      OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+    }
     await OneSignal.initialize(appId);
+    debugPrint('OneSignal initialized → id=$currentSubscriptionId token=$pushToken permission=$hasPermission');
     _emit(currentSubscriptionId);
     _observer = (OSPushSubscriptionChangedState state) => _emit(state.current.id);
     OneSignal.User.pushSubscription.addObserver(_observer!);
   }
+
+  /// هل منح المستخدم إذن الإشعارات فعلاً؟ (لا نطلب ثانيةً إن كان مفعّلاً.)
+  bool get hasPermission => isTestEnvironment ? false : OneSignal.Notifications.permission;
+
+  /// رمز FCM للجهاز — وجوده شرط التسجيل لدى OneSignal وخوادم الإرسال.
+  String? get pushToken => isTestEnvironment ? null : OneSignal.User.pushSubscription.token;
 
   /// طلب إذن الإشعارات — يُستدعى من زر النافذة السياقية فقط (وفق الدليل).
   Future<bool> requestPermission() async {
@@ -69,6 +80,7 @@ class OneSignalService {
   }
 
   void _emit(String? id) {
+    debugPrint('OneSignal subscription id: $id (token=$pushToken, permission=$hasPermission)');
     if (isRealSubscriptionId(id)) {
       pushSubscriptionIdEvents.add(id);
     }
