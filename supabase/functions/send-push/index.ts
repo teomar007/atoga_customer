@@ -17,7 +17,7 @@ import { importPKCS8, SignJWT } from 'npm:jose@5';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-secret',
 };
 
 type PushMode = 'user' | 'topic' | 'order_status';
@@ -29,6 +29,7 @@ interface PushBody {
   order_id?: string;
   title?: string;
   body?: string;
+  image?: string;
   data?: Record<string, string>;
 }
 
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
     }
     if (payload.mode === 'topic') {
       const topic = (payload.topic ?? 'all').trim();
-      await sendFcm({ topic, title, body, data: payload.data });
+      await sendFcm({ topic, title, body, image: payload.image, data: payload.data });
       return json({ ok: true, mode: 'topic', topic });
     }
     if (!payload.user_id) {
@@ -91,7 +92,7 @@ Deno.serve(async (req) => {
     if (!token) {
       return json({ error: 'no_device_token' }, 404);
     }
-    await sendFcm({ token, title, body, data: payload.data });
+    await sendFcm({ token, title, body, image: payload.image, data: payload.data });
     return json({ ok: true, mode: 'user' });
   } catch (error) {
     return json({ error: String(error) }, 500);
@@ -121,7 +122,7 @@ async function sendOrderStatus(project: ReturnType<typeof createClient>, orderId
   return json({ ok: true, mode: 'order_status', status, orderId });
 }
 
-async function sendFcm(message: { token?: string; topic?: string; title: string; body: string; data?: Record<string, string> }) {
+async function sendFcm(message: { token?: string; topic?: string; title: string; body: string; image?: string; data?: Record<string, string> }) {
   const raw = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
   if (!raw) {
     throw new Error('FIREBASE_SERVICE_ACCOUNT secret is not set');
@@ -135,9 +136,12 @@ async function sendFcm(message: { token?: string; topic?: string; title: string;
     body: JSON.stringify({
       message: {
         ...target,
-        notification: { title: message.title, body: message.body },
+        notification: { title: message.title, body: message.body, ...(message.image ? { image: message.image } : {}) },
+        android: {
+          priority: 'high',
+          ...(message.image ? { notification: { image: message.image } } : {}),
+        },
         data: message.data ?? {},
-        android: { priority: 'high' },
       },
     }),
   });

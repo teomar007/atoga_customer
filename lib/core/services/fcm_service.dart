@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import '../../features/orders/presentation/order_tracking_screen.dart';
 import '../navigation/app_navigator.dart';
@@ -111,13 +113,54 @@ class FcmService {
     if (notification == null) {
       return;
     }
+    // صورة اختيارية (نص + صورة): تُعرض بأسلوب Big Picture، وتُهمل بهدوء عند التعذّر.
+    final String? imageUrl = notification.android?.imageUrl ?? notification.apple?.imageUrl;
+    BigPictureStyleInformation? style;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      final File? file = await _cacheImage(imageUrl);
+      if (file != null) {
+        style = BigPictureStyleInformation(
+          FilePathAndroidBitmap(file.path),
+          contentTitle: notification.title,
+          summaryText: notification.body,
+        );
+      }
+    }
     await _local.show(
       notification.hashCode,
       notification.title,
       notification.body,
-      const NotificationDetails(android: AndroidNotificationDetails(_channelId, _channelName, importance: Importance.high, priority: Priority.high)),
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          importance: Importance.high,
+          priority: Priority.high,
+          styleInformation: style,
+        ),
+      ),
       payload: orderId,
     );
+  }
+
+  /// يُنزّل صورة الإشعار مرة واحدة إلى ملف مؤقت (ويُخزَّن للاستعمال اللاحق).
+  Future<File?> _cacheImage(String url) async {
+    try {
+      final Directory dir = await getTemporaryDirectory();
+      final File file = File('${dir.path}/push_image_${url.hashCode}.img');
+      if (await file.exists() && await file.length() > 0) {
+        return file;
+      }
+      final http.Response response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+        return null;
+      }
+      await file.writeAsBytes(response.bodyBytes, flush: true);
+      return file;
+    } on Object catch (error) {
+      debugPrint('FCM image download failed: $error');
+      return null;
+    }
   }
 
   void _openFromMessage(RemoteMessage message) => _openFromPayload(message.data['orderId']?.toString());

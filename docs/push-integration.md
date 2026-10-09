@@ -42,10 +42,26 @@ await supabase.functions.invoke('send-push', {
 });
 ```
 
+أ-2) **حملة مع صورة** (نص + صورة): أضف الحقل `image` برابط صورة HTTPS عام.
+تظهر الصورة بأسلوب Big Picture على أندرويد (وفي الخلفية يعرضها النظام مباشرة):
+```ts
+await supabase.functions.invoke('send-push', {
+  body: {
+    mode: 'topic',
+    topic: 'all',
+    title: 'عروض اليوم',
+    body: 'خصومات على منتجات مختارة',
+    image: 'https://<project>.supabase.co/storage/v1/object/public/banners/promo.jpg',
+  },
+});
+```
+> الصورة اختيارية؛ بدونها يصل الإشعار نصياً كالمعتاد. يتطلب رابطاً عاماً بصيغة
+> HTTPS (يفضّل مقاس ~1024×512 للنشرات).
+
 ب) **رسالة لمستخدم بعينه**:
 ```ts
 await supabase.functions.invoke('send-push', {
-  body: { mode: 'user', user_id: '<UUID>', title: 'مرحباً', body: 'طلبك جاهز' },
+  body: { mode: 'user', user_id: '<UUID>', title: 'مرحباً', body: 'طلبك جاهز', image: 'https://…/promo.jpg' },
 });
 ```
 
