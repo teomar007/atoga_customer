@@ -20,6 +20,12 @@ class OneSignalService {
 
   bool _initialized = false;
   OnPushSubscriptionChangeObserver? _observer;
+  String? _lastInitError;
+
+  bool get initialized => _initialized;
+
+  /// نصّ آخر خطأ تهيئة (يُعرض في أداة التشخيص).
+  String? get lastInitError => _lastInitError;
 
   /// بيئة flutter test: لا توجد قناة منصة حقيقية فيتعطل أي استدعاء.
   static bool get isTestEnvironment => Platform.environment['FLUTTER_TEST'] == 'true';
@@ -37,16 +43,31 @@ class OneSignalService {
     if (_initialized || isTestEnvironment) {
       return;
     }
-    _initialized = true;
-    // سجلّ مفصّل في وضع التطوير لتشخيص التسجيل (FCM token / id / permission).
-    if (kDebugMode) {
-      OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+    try {
+      // سجلّ مفصّل في وضع التطوير لتشخيص التسجيل (FCM token / id / permission).
+      if (kDebugMode) {
+        OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+      }
+      await OneSignal.initialize(appId);
+      _initialized = true;
+      _lastInitError = null;
+      debugPrint('OneSignal initialized → id=$currentSubscriptionId token=$pushToken permission=$hasPermission');
+      _emit(currentSubscriptionId);
+      if (_observer == null) {
+        _observer = (OSPushSubscriptionChangedState state) => _emit(state.current.id);
+        OneSignal.User.pushSubscription.addObserver(_observer!);
+      }
+    } on Object catch (error) {
+      // نُبقي القناة قابلة لإعادة المحاولة (لا نعتبره مهيّأً).
+      _lastInitError = '$error';
+      debugPrint('OneSignal initialize failed: $error');
     }
-    await OneSignal.initialize(appId);
-    debugPrint('OneSignal initialized → id=$currentSubscriptionId token=$pushToken permission=$hasPermission');
-    _emit(currentSubscriptionId);
-    _observer = (OSPushSubscriptionChangedState state) => _emit(state.current.id);
-    OneSignal.User.pushSubscription.addObserver(_observer!);
+  }
+
+  /// إعادة محاولة التهيئة (زر داخل أداة التشخيص).
+  Future<void> retryInitialize(String appId) async {
+    _initialized = false;
+    await initialize(appId);
   }
 
   /// هل منح المستخدم إذن الإشعارات فعلاً؟ (لا نطلب ثانيةً إن كان مفعّلاً.)
@@ -66,7 +87,9 @@ class OneSignalService {
     return 'permission: $hasPermission\n'
         'optedIn: $optedIn\n'
         'subscriptionId: $currentSubscriptionId\n'
-        'fcmToken: ${pushToken ?? "(null)"}';
+        'fcmToken: ${pushToken ?? "(null)"}\n'
+        'initialized: $initialized\n'
+        'lastInitError: ${lastInitError ?? "(none)"}';
   }
 
   /// طلب إذن الإشعارات — يُستدعى من زر النافذة السياقية فقط (وفق الدليل).

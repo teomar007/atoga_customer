@@ -129,10 +129,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _versionTaps = 0;
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('OneSignal diagnostics'),
-        content: SelectableText(OneSignalService.instance.diagnosticsSummary),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel))],
+      builder: (BuildContext context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setDialogState) => AlertDialog(
+          title: const Text('OneSignal diagnostics'),
+          content: SelectableText(OneSignalService.instance.diagnosticsSummary),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await OneSignalService.instance.retryInitialize(AppConstants.onesignalAppId);
+                setDialogState(() {});
+              },
+              child: const Text('إعادة تهيئة'),
+            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
+          ],
+        ),
       ),
     );
   }

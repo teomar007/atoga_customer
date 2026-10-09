@@ -47,6 +47,10 @@ android {
         release {
             // التوقيع بمفتاح رفع حقيقي (متطلب Google Play) — لا debug.
             signingConfig = signingConfigs.getByName("release")
+            // R8 مفعّل مع قواعد صريحة تحمي OneSignal/Firebase/WorkManager.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
