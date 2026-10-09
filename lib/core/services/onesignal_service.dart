@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 /// بثّ معرّف اشتراك OneSignal الحقيقي — يملؤه [OneSignalService]،
@@ -21,6 +22,9 @@ class OneSignalService {
   bool _initialized = false;
   OnPushSubscriptionChangeObserver? _observer;
   String? _lastInitError;
+  final List<String> _log = <String>[];
+
+  static const MethodChannel _probeChannel = MethodChannel('app_native_probe');
 
   bool get initialized => _initialized;
 
@@ -44,13 +48,16 @@ class OneSignalService {
       return;
     }
     try {
+      _log.add('init:start');
       // سجلّ مفصّل في وضع التطوير لتشخيص التسجيل (FCM token / id / permission).
       if (kDebugMode) {
         OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
       }
-      await OneSignal.initialize(appId);
+      // مهلة صريحة: تعليق القناة (كما نراه على الجهاز) يجب أن يظهر كخطأ.
+      await OneSignal.initialize(appId).timeout(const Duration(seconds: 15));
       _initialized = true;
       _lastInitError = null;
+      _log.add('init:ok id=$currentSubscriptionId');
       debugPrint('OneSignal initialized → id=$currentSubscriptionId token=$pushToken permission=$hasPermission');
       _emit(currentSubscriptionId);
       if (_observer == null) {
@@ -60,7 +67,20 @@ class OneSignalService {
     } on Object catch (error) {
       // نُبقي القناة قابلة لإعادة المحاولة (لا نعتبره مهيّأً).
       _lastInitError = '$error';
+      _log.add('init:err $error');
       debugPrint('OneSignal initialize failed: $error');
+    }
+  }
+
+  /// تشخيص أصلي: هل فئات OneSignal/Firebase موجودة في الحزمة (كشف قطع R8).
+  Future<String> nativeProbe() async {
+    if (isTestEnvironment) {
+      return 'test environment';
+    }
+    try {
+      return await _probeChannel.invokeMethod<String>('probe') ?? '(empty)';
+    } on Object catch (error) {
+      return 'probe failed: $error';
     }
   }
 
@@ -89,7 +109,8 @@ class OneSignalService {
         'subscriptionId: $currentSubscriptionId\n'
         'fcmToken: ${pushToken ?? "(null)"}\n'
         'initialized: $initialized\n'
-        'lastInitError: ${lastInitError ?? "(none)"}';
+        'lastInitError: ${lastInitError ?? "(none)"}\n'
+        'log:\n${_log.isEmpty ? "(empty)" : _log.join("\n")}';
   }
 
   /// طلب إذن الإشعارات — يُستدعى من زر النافذة السياقية فقط (وفق الدليل).

@@ -27,6 +27,19 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+        // تشخيص: هل فئات OneSignal/Firebase موجودة فعلاً بعد R8؟
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app_native_probe").setMethodCallHandler { call, result ->
+            when (call.method) {
+                "probe" -> {
+                    val onesignal = runCatching { Class.forName("com.onesignal.OneSignal"); "ok" }
+                        .getOrElse { "missing:${it.javaClass.simpleName}" }
+                    val firebase = runCatching { Class.forName("com.google.firebase.messaging.FirebaseMessagingService"); "ok" }
+                        .getOrElse { "missing:${it.javaClass.simpleName}" }
+                    result.success("onesignalClass=$onesignal; firebaseMessaging=$firebase")
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     /** مهمة دورية (≈15 دقيقة، الحد الأدنى في أندرويد) لتحديث الأيقونة خلفياً. */

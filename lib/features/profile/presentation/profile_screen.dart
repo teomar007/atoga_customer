@@ -132,12 +132,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (BuildContext context) => StatefulBuilder(
         builder: (BuildContext context, StateSetter setDialogState) => AlertDialog(
           title: const Text('OneSignal diagnostics'),
-          content: SelectableText(OneSignalService.instance.diagnosticsSummary),
+          content: SingleChildScrollView(
+            child: FutureBuilder<String>(
+              future: OneSignalService.instance.nativeProbe(),
+              builder: (BuildContext context, AsyncSnapshot<String> snapshot) => SelectableText(
+                '${OneSignalService.instance.diagnosticsSummary}\nprobe: ${snapshot.data ?? "..."}',
+              ),
+            ),
+          ),
           actions: [
             TextButton(
-              onPressed: () async {
-                await OneSignalService.instance.retryInitialize(AppConstants.onesignalAppId);
+              // غير منتظر: التعليق كان يمنع تحديث النافذة. نحدّث فوراً ثم عند العودة.
+              onPressed: () {
                 setDialogState(() {});
+                OneSignalService.instance.retryInitialize(AppConstants.onesignalAppId).whenComplete(() {
+                  if (context.mounted) {
+                    setDialogState(() {});
+                  }
+                });
               },
               child: const Text('إعادة تهيئة'),
             ),
