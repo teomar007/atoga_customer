@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/fcm_service.dart';
@@ -24,6 +23,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/empty_state_view.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_of_service_screen.dart';
+import 'faq_screen.dart';
 import 'widgets/app_developer_section.dart';
 import 'widgets/support_section.dart';
 import 'widgets/social_links_section.dart';
@@ -97,7 +97,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 18),
           _GroupLabel(text: l10n.support),
           const SupportSection(),
-          _Tile(icon: Icons.help_outline_rounded, title: l10n.faq, onTap: () => _open(AppConstants.faqUrl, l10n)),
+          _Tile(
+            icon: Icons.help_outline_rounded,
+            title: l10n.faq,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (BuildContext context) => const FaqScreen()),
+            ),
+          ),
           const SizedBox(height: 18),
           const SocialLinksSection(),
           const SizedBox(height: 18),
@@ -228,12 +234,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Future<void> _open(String url, AppLocalizations l10n) async {
-    final bool ok = await launchUrl(Uri.parse(url)).onError((Object error, StackTrace stack) => false);
-    if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.supportUnavailable)));
-    }
-  }
 }
 
 /// شاشة الزائر: رسالة صريحة + زر يوجّه إلى تسجيل الدخول.
