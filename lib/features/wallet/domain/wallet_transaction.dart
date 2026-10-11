@@ -1,7 +1,8 @@
 /// نوع حركة المحفظة — يطابق قيم عمود `type` في `wallet_transactions`.
 enum WalletTransactionType {
   deposit('deposit'),
-  payment('payment');
+  payment('payment'),
+  withdrawal('withdrawal');
 
   const WalletTransactionType(this.wire);
 

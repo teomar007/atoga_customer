@@ -152,7 +152,11 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color = status == OrderStatus.delivered ? AppColors.success : (status == OrderStatus.cancelled ? Colors.grey : AppColors.primary);
+    final Color color = status == OrderStatus.delivered
+        ? AppColors.success
+        : (status == OrderStatus.returned
+            ? Colors.deepOrange
+            : (status == OrderStatus.cancelled ? Colors.grey : AppColors.primary));
     return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)), child: Text(status.wire, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)));
   }
 }

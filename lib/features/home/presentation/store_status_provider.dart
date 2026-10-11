@@ -28,18 +28,18 @@ class StoreStatusController extends Notifier<StoreStatus> {
   Future<void> _load() async {
     try {
       final SupabaseClient client = ref.read(supabaseClientProvider);
-      final List<StoreHours> hours = await fetchStoreHours(client);
+      final List<StoreShift> shifts = await fetchStoreShifts(client);
       _refreshTimer?.cancel();
       // المؤقّت يُجدول فقط بعد نجاح الجلب (لا مؤقّت عائم في الاختبارات).
-      _refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) => _apply(hours));
-      _apply(hours);
+      _refreshTimer = Timer.periodic(const Duration(seconds: 60), (_) => _apply(shifts));
+      _apply(shifts);
     } on Object catch (error) {
       // غياب الجدول أو فشل الشبكة ليس «إغلاقاً»: نبقى مفتوحين افتراضياً.
       debugPrint('store hours unavailable: $error');
     }
   }
 
-  void _apply(List<StoreHours> hours) {
-    state = isStoreOpenNow(hours, DateTime.now()) ? StoreStatus.open : StoreStatus.closed;
+  void _apply(List<StoreShift> shifts) {
+    state = isStoreOpenNow(shifts, DateTime.now()) ? StoreStatus.open : StoreStatus.closed;
   }
 }

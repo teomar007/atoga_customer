@@ -24,7 +24,9 @@ class ProductCard extends ConsumerWidget {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final int quantity = ref.watch(cartControllerProvider.select((CartState s) => s.quantityOf(product.id)));
     // عند إغلاق المتجر تُعطَّل الإضافة وعدادات الكمية.
-    final bool canOrder = ref.watch(storeStatusProvider) == StoreStatus.open;
+    // وكذلك عند تجميد الحساب.
+    final bool frozen = ref.watch(isFrozenProvider);
+    final bool canOrder = ref.watch(storeStatusProvider) == StoreStatus.open && !frozen;
     final ThemeData theme = Theme.of(context);
     final String lang = Localizations.localeOf(context).languageCode;
 
@@ -106,6 +108,11 @@ class ProductCard extends ConsumerWidget {
 
   void _addToCart(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
     if (!product.inStock) {
+      return;
+    }
+    if (ref.read(isFrozenProvider)) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${l10n.accountFrozenTitle} — ${ref.read(frozenReasonProvider) ?? l10n.accountFrozenBlocked}')));
       return;
     }
     // المتجر مغلق: لا إضافة — رسالة واضحة بدل رسالة النجاح القديمة.

@@ -7,6 +7,7 @@ import '../../../core/widgets/button_label.dart';
 import '../../../core/widgets/empty_state_view.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/navigation/main_tab_provider.dart';
+import '../../auth/presentation/auth_controller.dart';
 import '../../checkout/presentation/checkout_screen.dart';
 import '../domain/cart_item.dart';
 import 'cart_controller.dart';
@@ -84,13 +85,30 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const CheckoutScreen())),
-            child: ButtonLabel('${l10n.proceedToCheckout} • ${Formatters.price(cart.total, lang)}'),
-          ),
-        ),
+        child: Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
+          final bool frozen = ref.watch(isFrozenProvider);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (frozen)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    '${l10n.accountFrozenTitle} — ${ref.watch(frozenReasonProvider) ?? l10n.accountFrozenBlocked}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w700, fontSize: 12.5),
+                  ),
+                ),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: frozen ? null : () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (BuildContext context) => const CheckoutScreen())),
+                  child: ButtonLabel('${l10n.proceedToCheckout} • ${Formatters.price(cart.total, lang)}'),
+                ),
+              ),
+            ],
+          );
+        }),
       ),
     );
   }

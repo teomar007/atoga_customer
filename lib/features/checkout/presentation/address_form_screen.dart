@@ -39,6 +39,13 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   @override
   void initState() {
     super.initState();
+    // اجلب مناطق التوصيل المحدّثة من الخادم عند كل فتح للنموذج،
+    // فتنعكس إضافات/تعديلات/إخفاء الإدارة تلقائياً.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.invalidate(deliveryZonesProvider);
+      }
+    });
     _zoneId = widget.existing?.deliveryZoneId;
     _lat = widget.existing?.latitude;
     _lng = widget.existing?.longitude;

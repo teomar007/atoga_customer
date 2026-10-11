@@ -1,85 +1,69 @@
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// ساعات عمل يوم واحد من جدول `store_hours` (يديره تطبيق الأدمن).
-class StoreHours {
-  const StoreHours({
+/// وردية عمل واحدة من جدول `store_shifts` (يديرها تطبيق المانجر).
+/// يمكن أن يكون لليوم أكثر من وردية (فتح/إغلاق عدة مرات في اليوم).
+class StoreShift {
+  const StoreShift({
     required this.dayOfWeek,
-    this.morningOpen,
-    this.morningClose,
-    this.eveningOpen,
-    this.eveningClose,
-    this.isActive = true,
+    required this.open,
+    required this.close,
+    this.sortOrder = 0,
   });
 
-  /// 1 = الاثنين ... 7 = الأحد (نفس `DateTime.weekday` في Dart).
+  /// 1 = الاثنين … 7 = الأحد (يوافق `DateTime.weekday`).
   final int dayOfWeek;
+  final TimeOfDay open;
+  final TimeOfDay close;
+  final int sortOrder;
 
-  /// الفترة الصباحية (اختيارية — قد يعمل المتجر مساءً فقط).
-  final TimeOfDay? morningOpen;
-  final TimeOfDay? morningClose;
+  /// دقائق الفتح/الإغلاق من منتصف الليل (00:00 تُعتبر 24:00 للإغلاق).
+  int get openMinutes => open.hour * 60 + open.minute;
+  int get closeMinutes => (close.hour == 0 && close.minute == 0) ? 24 * 60 : close.hour * 60 + close.minute;
 
-  /// الفترة المسائية (اختيارية).
-  final TimeOfDay? eveningOpen;
-  final TimeOfDay? eveningClose;
-
-  final bool isActive;
-
-  factory StoreHours.fromJson(Map<String, dynamic> json) {
-    return StoreHours(
+  factory StoreShift.fromJson(Map<String, dynamic> json) {
+    return StoreShift(
       dayOfWeek: (json['day_of_week'] as num?)?.toInt() ?? 0,
-      morningOpen: _time(json['morning_open']),
-      morningClose: _time(json['morning_close']),
-      eveningOpen: _time(json['evening_open']),
-      eveningClose: _time(json['evening_close']),
-      isActive: json['is_active'] as bool? ?? true,
+      open: _parseTime('${json['open_time'] ?? ''}'),
+      close: _parseTime('${json['close_time'] ?? ''}'),
+      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
     );
-  }
-
-  static TimeOfDay? _time(Object? value) {
-    if (value == null) {
-      return null;
-    }
-    final List<String> parts = '$value'.split(':');
-    if (parts.length < 2) {
-      return null;
-    }
-    return TimeOfDay(hour: int.tryParse(parts[0]) ?? 0, minute: int.tryParse(parts[1]) ?? 0);
   }
 }
 
-/// يجلب أيام العمل الفعّالة من Supabase (الكتابة للأدمن عبر service_role).
-Future<List<StoreHours>> fetchStoreHours(SupabaseClient client) async {
+TimeOfDay _parseTime(String raw) {
+  final List<String> parts = raw.split(':');
+  final int h = int.tryParse(parts.isNotEmpty ? parts[0] : '') ?? 0;
+  final int m = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 0;
+  return TimeOfDay(hour: h, minute: m);
+}
+
+/// كل ورديات الأسبوع الفعّالة.
+Future<List<StoreShift>> fetchStoreShifts(SupabaseClient client) async {
   final PostgrestList rows = await client
-      .from('store_hours')
+      .from('store_shifts')
       .select()
       .eq('is_active', true)
-      .order('day_of_week', ascending: true);
-  return rows.map((dynamic row) => StoreHours.fromJson(Map<String, dynamic>.from(row as Map))).toList();
+      .order('day_of_week', ascending: true)
+      .order('sort_order', ascending: true);
+  return rows.map((dynamic row) => StoreShift.fromJson(Map<String, dynamic>.from(row as Map))).toList();
 }
 
 /// هل المتجر مفتوح الآن؟ منطق خالص قابل للاختبار.
 ///
-/// غياب صف اليوم أو فترة ناقصة يعني «مغلق». المتصل بالمزود يتعامل مع
+/// غياب أي وردية تحتوي الوقت الحالي يعني «مغلق». المتصل بالمزود يتعامل مع
 /// فشل الجلب كـ«مفتوح افتراضياً» كي لا تُعطّل الشبكة التسوق.
-bool isStoreOpenNow(List<StoreHours> hours, DateTime now) {
-  StoreHours? day;
-  for (final StoreHours h in hours) {
-    if (h.isActive && h.dayOfWeek == now.weekday) {
-      day = h;
-      break;
+bool isStoreOpenNow(List<StoreShift> shifts, DateTime now) {
+  final int current = now.hour * 60 + now.minute;
+  for (final StoreShift shift in shifts) {
+    if (shift.dayOfWeek != now.weekday) {
+      continue;
+    }
+    final int open = shift.open.hour * 60 + shift.open.minute;
+    final int close = (shift.close.hour == 0 && shift.close.minute == 0) ? 24 * 60 : shift.close.hour * 60 + shift.close.minute;
+    if (current >= open && current < close) {
+      return true;
     }
   }
-  if (day == null) {
-    return false;
-  }
-  bool within(TimeOfDay? open, TimeOfDay? close) {
-    if (open == null || close == null) {
-      return false;
-    }
-    final int current = now.hour * 60 + now.minute;
-    return current >= open.hour * 60 + open.minute && current < close.hour * 60 + close.minute;
-  }
-
-  return within(day.morningOpen, day.morningClose) || within(day.eveningOpen, day.eveningClose);
+  return false;
 }

@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/supabase_providers.dart';
 import '../../cart/domain/cart_item.dart';
 import '../../cart/presentation/cart_controller.dart';
+import '../../auth/presentation/auth_controller.dart';
 import '../../orders/data/order_repository.dart';
 import '../../orders/presentation/orders_controller.dart';
 import '../data/address_repository.dart';
@@ -195,6 +196,11 @@ class CheckoutController extends Notifier<CheckoutState> {
   /// يرسل الطلب وعناصره ثم يمسح السلة. يعيد معرّف الطلب أو null عند الفشل.
   Future<String?> submit({required Address address, required List<CartItem> items, required OrderTotals totals, String? couponCode, PaymentMethod paymentMethod = PaymentMethod.cod}) async {
     state = state.copyWith(submitting: true, clearError: true);
+    // حساب مجمّد: يمنع الشراء (الخادم يمنعه أيضاً عبر حاجز orders).
+    if (ref.read(isFrozenProvider)) {
+      state = state.copyWith(submitting: false, error: 'accountFrozen', errorDetail: 'account_frozen');
+      return null;
+    }
     try {
       final String id = await ref.read(orderRepositoryProvider).createOrder(NewOrderPayload(address: address.toJson(), items: items, subtotal: totals.subtotal, discount: totals.discount, deliveryFee: totals.delivery, total: totals.total, couponCode: couponCode, paymentMethod: paymentMethod.wire));
       await ref.read(cartControllerProvider.notifier).clear();

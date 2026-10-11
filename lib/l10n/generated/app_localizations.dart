@@ -1334,6 +1334,12 @@ abstract class AppLocalizations {
   /// **'ملغى'**
   String get statusCancelled;
 
+  /// No description provided for @statusReturned.
+  ///
+  /// In ar, this message translates to:
+  /// **'مرتجع'**
+  String get statusReturned;
+
   /// No description provided for @statusReceivedDesc.
   ///
   /// In ar, this message translates to:
@@ -1363,6 +1369,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تم إلغاء هذا الطلب'**
   String get statusCancelledDesc;
+
+  /// No description provided for @statusReturnedDesc.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم يتم استلام الطلب وأُعيد إلى المتجر'**
+  String get statusReturnedDesc;
 
   /// No description provided for @courierInfo.
   ///
@@ -1447,6 +1459,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'حسابي'**
   String get profileTitle;
+
+  /// No description provided for @accountFrozenTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم تجميد حسابك'**
+  String get accountFrozenTitle;
+
+  /// No description provided for @accountFrozenBlocked.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يمكنك إتمام أي عملية شراء حالياً. للاستفسار تواصل مع الإدارة.'**
+  String get accountFrozenBlocked;
 
   /// No description provided for @personalInfo.
   ///
@@ -1891,6 +1915,12 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'شحن رصيد من الإدارة'**
   String get walletDepositTitle;
+
+  /// No description provided for @walletWithdrawalTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'سحب رصيد من الإدارة'**
+  String get walletWithdrawalTitle;
 
   /// No description provided for @walletPaymentTitle.
   ///

@@ -4,7 +4,8 @@ enum OrderStatus {
   preparing('preparing'),
   onTheWay('on_the_way'),
   delivered('delivered'),
-  cancelled('cancelled');
+  cancelled('cancelled'),
+  returned('returned');
 
   const OrderStatus(this.wire);
 
@@ -20,6 +21,7 @@ enum OrderStatus {
     onTheWay => 2,
     delivered => 3,
     cancelled => -1,
+    returned => -2,
   };
 
   /// الإلغاء مسموح في المرحلة الأولى حصراً (`received`): بمجرد بدء التجهيز

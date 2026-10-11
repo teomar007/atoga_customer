@@ -8,6 +8,7 @@ import '../../features/auth/domain/customer_user.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/cart/presentation/cart_controller.dart';
 import '../../features/checkout/presentation/checkout_controller.dart';
+import '../../features/checkout/presentation/delivery_zones_provider.dart';
 import '../../features/coupons/presentation/coupons_controller.dart';
 import '../../features/favorites/presentation/favorites_provider.dart';
 import '../../features/orders/presentation/orders_controller.dart';
@@ -31,7 +32,7 @@ class SessionSync extends ConsumerStatefulWidget {
   ConsumerState<SessionSync> createState() => _SessionSyncState();
 }
 
-class _SessionSyncState extends ConsumerState<SessionSync> {
+class _SessionSyncState extends ConsumerState<SessionSync> with WidgetsBindingObserver {
   /// مفتاح آخر حالة زامَنّاها: يمنع إعادة المزامنة عند إعادة البناء
   /// بالحالة نفسها (الكائنات تتجدد مع كل حدث ومعرّف المستخدم لا يتغيّر).
   String? _syncedKey;
@@ -39,8 +40,23 @@ class _SessionSyncState extends ConsumerState<SessionSync> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // جلسة محفوظة عند الإقلاع: نزامن بعد أول إطار حتى تكون المزوّدات جاهزة.
     WidgetsBinding.instance.addPostFrameCallback((_) => _reconcile());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// عند العودة إلى التطبيق: أعد جلب مناطق التوصيل لتعكس تعديلات الإدارة.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(deliveryZonesProvider);
+    }
   }
 
   @override

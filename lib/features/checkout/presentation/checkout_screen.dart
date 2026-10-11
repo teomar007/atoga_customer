@@ -32,7 +32,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAddresses());
+    // بعد أول إطار (لا يمكن استخدام ref قبله): حدّث المناطق وحمّل العناوين.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.invalidate(deliveryZonesProvider);
+      _loadAddresses();
+    });
   }
 
   Future<void> _loadAddresses() async {
@@ -74,7 +81,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
           final CheckoutState state = ref.watch(checkoutControllerProvider);
           final CartState cart = ref.watch(cartControllerProvider);
-          final bool disabled = state.address == null || state.submitting || cart.isEmpty;
+          final bool frozen = ref.watch(isFrozenProvider);
+          final bool disabled = state.address == null || state.submitting || cart.isEmpty || frozen;
           final double total = cart.subtotal - cart.discount + state.deliveryFee;
           return SizedBox(width: double.infinity, child: FilledButton(onPressed: disabled ? null : () => _confirm(cart), child: ButtonLabel(state.submitting ? l10n.sendingOrder : '${l10n.confirmOrder} • ${Formatters.price(total, Localizations.localeOf(context).languageCode)}')));
         }),
@@ -91,6 +99,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Future<void> _confirm(CartState cart) async {
     final AppLocalizations l10n = AppLocalizations.of(context);
+    if (ref.read(isFrozenProvider)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${l10n.accountFrozenTitle} — ${ref.read(frozenReasonProvider) ?? l10n.accountFrozenBlocked}')),
+      );
+      return;
+    }
     final Address? address = ref.read(checkoutControllerProvider).address;
     if (address == null) {
       return;
@@ -170,6 +184,8 @@ class _AddressSection extends ConsumerWidget {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final AddressesState state = ref.watch(addressesControllerProvider);
     final List<DeliveryZone> zones = ref.watch(deliveryZonesProvider).valueOrNull ?? const <DeliveryZone>[];
+    // نُخفي العناوين التي صارت منطقتها غير متاحة (مخفية/محذوفة).
+    final List<Address> items = state.items.where((Address a) => a.isDisplayableWith(zones)).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,7 +199,7 @@ class _AddressSection extends ConsumerWidget {
         const SizedBox(height: 8),
         if (state.loading)
           const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: CircularProgressIndicator()))
-        else if (state.isEmpty)
+        else if (items.isEmpty)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.divider)),
@@ -193,9 +209,9 @@ class _AddressSection extends ConsumerWidget {
           )
         else
           RadioGroup<String>(
-            groupValue: selected?.id ?? selected?.street ?? '',
+            groupValue: (selected != null && selected!.isDisplayableWith(zones)) ? (selected!.id ?? selected!.street) : '',
             onChanged: (String? value) {
-              for (final Address a in state.items) {
+              for (final Address a in items) {
                 if ((a.id ?? a.street) == value) {
                   onSelect(a);
                   return;
@@ -203,7 +219,7 @@ class _AddressSection extends ConsumerWidget {
               }
             },
             child: Column(
-              children: state.items.map((Address a) {
+              children: items.map((Address a) {
                 final String title = a.titleFor(zones);
                 return RadioListTile<String>(
                   value: a.id ?? a.street,

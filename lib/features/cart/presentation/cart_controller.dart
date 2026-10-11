@@ -205,6 +205,10 @@ class CartController extends Notifier<CartState> {
     if (ref.read(storeStatusProvider) == StoreStatus.closed) {
       return;
     }
+    // حساب مجمّد: يُمنع أي شراء (إضافة أو زيادة كمية).
+    if (ref.read(isFrozenProvider)) {
+      return;
+    }
     final List<CartItem> items = List<CartItem>.of(state.items);
     final int index = items.indexWhere((CartItem i) => i.productId == product.id);
     if (index >= 0) {
@@ -221,6 +225,9 @@ class CartController extends Notifier<CartState> {
   /// زيادة كمية عنصر قائم. يعيد `false` إذا لم يوجد.
   Future<bool> increment(String productId) async {
     if (ref.read(storeStatusProvider) == StoreStatus.closed) {
+      return false;
+    }
+    if (ref.read(isFrozenProvider)) {
       return false;
     }
     final int index = _indexOf(productId);

@@ -12,6 +12,7 @@ extension OrderStatusL10n on OrderStatus {
       OrderStatus.onTheWay => l10n.statusOnTheWay,
       OrderStatus.delivered => l10n.statusDelivered,
       OrderStatus.cancelled => l10n.statusCancelled,
+      OrderStatus.returned => l10n.statusReturned,
     };
   }
 
@@ -22,6 +23,7 @@ extension OrderStatusL10n on OrderStatus {
       OrderStatus.onTheWay => l10n.statusOnTheWayDesc,
       OrderStatus.delivered => l10n.statusDeliveredDesc,
       OrderStatus.cancelled => l10n.statusCancelledDesc,
+      OrderStatus.returned => l10n.statusReturnedDesc,
     };
   }
 }
@@ -38,11 +40,13 @@ class OrderTimeline extends StatelessWidget {
     final int current = status.step;
     final List<OrderStatus> steps = <OrderStatus>[OrderStatus.received, OrderStatus.preparing, OrderStatus.onTheWay, OrderStatus.delivered];
 
-    if (status == OrderStatus.cancelled) {
+    if (status == OrderStatus.cancelled || status == OrderStatus.returned) {
+      final bool isReturned = status == OrderStatus.returned;
+      final Color tone = isReturned ? Colors.deepOrange : Colors.red;
       return Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.shade200)),
-        child: Row(children: [const Icon(Icons.cancel_outlined, color: Colors.red), const SizedBox(width: 10), Expanded(child: Text(status.description(l10n), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600)))]),
+        decoration: BoxDecoration(color: tone.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12), border: Border.all(color: tone.withValues(alpha: 0.3))),
+        child: Row(children: [Icon(isReturned ? Icons.assignment_return_rounded : Icons.cancel_outlined, color: tone), const SizedBox(width: 10), Expanded(child: Text(status.description(l10n), style: TextStyle(color: tone, fontWeight: FontWeight.w600)))]),
       );
     }
 

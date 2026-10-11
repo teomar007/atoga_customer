@@ -686,6 +686,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statusCancelled => 'ملغى';
 
   @override
+  String get statusReturned => 'مرتجع';
+
+  @override
   String get statusReceivedDesc => 'تم استلام طلبك بنجاح';
 
   @override
@@ -699,6 +702,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get statusCancelledDesc => 'تم إلغاء هذا الطلب';
+
+  @override
+  String get statusReturnedDesc => 'لم يتم استلام الطلب وأُعيد إلى المتجر';
 
   @override
   String get courierInfo => 'المندوب';
@@ -746,6 +752,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profileTitle => 'حسابي';
+
+  @override
+  String get accountFrozenTitle => 'تم تجميد حسابك';
+
+  @override
+  String get accountFrozenBlocked =>
+      'لا يمكنك إتمام أي عملية شراء حالياً. للاستفسار تواصل مع الإدارة.';
 
   @override
   String get personalInfo => 'البيانات الشخصية';
@@ -986,6 +999,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get walletDepositTitle => 'شحن رصيد من الإدارة';
+
+  @override
+  String get walletWithdrawalTitle => 'سحب رصيد من الإدارة';
 
   @override
   String walletPaymentTitle(String orderId) {

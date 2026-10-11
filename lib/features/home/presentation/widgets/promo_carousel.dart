@@ -135,38 +135,31 @@ class _Background extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!banner.hasImage) {
-      return const _GradientBackground();
+      return ColoredBox(color: banner.backgroundValue);
     }
     // الصورة المضمّنة (استضافة ذاتية) عند تطابق الرابط — بلا اعتماد شبكة.
     final String? bundled = PromoBanner.bundledAssetFor(banner.imageUrl);
+    final Widget image;
     if (bundled != null) {
-      return Image.asset(
+      image = Image.asset(
         bundled,
         fit: BoxFit.cover,
-        errorBuilder: (BuildContext context, Object error, StackTrace? stack) => const _GradientBackground(),
+        alignment: banner.imageAlignment,
+        errorBuilder: (BuildContext context, Object error, StackTrace? stack) => ColoredBox(color: banner.backgroundValue),
+      );
+    } else {
+      image = CachedNetworkImage(
+        imageUrl: banner.imageUrl!,
+        fit: BoxFit.cover,
+        alignment: banner.imageAlignment,
+        fadeInDuration: const Duration(milliseconds: 180),
+        placeholder: (BuildContext context, String url) => ColoredBox(color: banner.backgroundValue),
+        errorWidget: (BuildContext context, String url, Object error) => ColoredBox(color: banner.backgroundValue),
       );
     }
-    return CachedNetworkImage(
-      imageUrl: banner.imageUrl!,
-      fit: BoxFit.cover,
-      fadeInDuration: const Duration(milliseconds: 180),
-      placeholder: (BuildContext context, String url) => const _GradientBackground(),
-      errorWidget: (BuildContext context, String url, Object error) => const _GradientBackground(),
-    );
-  }
-}
-
-/// التصميم القديم: خلفية متدرجة بالألوان الأساسية.
-class _GradientBackground extends StatelessWidget {
-  const _GradientBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: <Color>[AppColors.primary, AppColors.primaryDark], begin: AlignmentDirectional.topStart, end: AlignmentDirectional.bottomEnd),
-      ),
-    );
+    // التكبير (اختياري من المانجر) لإبراز جزء من الصورة.
+    final double scale = banner.imageScale <= 0 ? 1 : banner.imageScale;
+    return Transform.scale(scale: scale, child: image);
   }
 }
 

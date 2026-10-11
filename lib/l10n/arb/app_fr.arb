@@ -225,11 +225,13 @@
   "statusOnTheWay": "En route",
   "statusDelivered": "Livrée",
   "statusCancelled": "Annulée",
+  "statusReturned": "Retournée",
   "statusReceivedDesc": "Votre commande a bien été reçue",
   "statusPreparingDesc": "Notre équipe prépare votre commande",
   "statusOnTheWayDesc": "Le livreur est en chemin",
   "statusDeliveredDesc": "Commande livrée. Bon appétit !",
   "statusCancelledDesc": "Cette commande a été annulée",
+  "statusReturnedDesc": "La commande n'a pas été réceptionnée et a été retournée",
   "courierInfo": "Livreur",
   "callCourier": "Appeler",
   "orderDate": "Date de commande",
@@ -247,6 +249,8 @@
   "@estimatedDelivery": { "placeholders": { "time": { "type": "String" } } },
 
   "profileTitle": "Compte",
+  "accountFrozenTitle": "Votre compte est gelé",
+  "accountFrozenBlocked": "Vous ne pouvez pas passer de commande pour le moment. Contactez l'administration pour plus d'informations.",
   "personalInfo": "Informations personnelles",
   "editProfile": "Modifier le profil",
   "name": "Nom complet",
@@ -323,6 +327,7 @@
   "walletHistoryTitle": "Historique des opérations",
   "walletNoTransactions": "Aucune opération pour le moment",
   "walletDepositTitle": "Dépôt de solde (boutique)",
+  "walletWithdrawalTitle": "Retrait de solde (administration)",
   "walletPaymentTitle": "Paiement pour la commande n° #{orderId}",
   "@walletPaymentTitle": {
     "placeholders": {

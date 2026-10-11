@@ -698,6 +698,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get statusCancelled => 'Annulée';
 
   @override
+  String get statusReturned => 'Retournée';
+
+  @override
   String get statusReceivedDesc => 'Votre commande a bien été reçue';
 
   @override
@@ -711,6 +714,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get statusCancelledDesc => 'Cette commande a été annulée';
+
+  @override
+  String get statusReturnedDesc =>
+      'La commande n\'a pas été réceptionnée et a été retournée';
 
   @override
   String get courierInfo => 'Livreur';
@@ -758,6 +765,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileTitle => 'Compte';
+
+  @override
+  String get accountFrozenTitle => 'Votre compte est gelé';
+
+  @override
+  String get accountFrozenBlocked =>
+      'Vous ne pouvez pas passer de commande pour le moment. Contactez l\'administration pour plus d\'informations.';
 
   @override
   String get personalInfo => 'Informations personnelles';
@@ -1003,6 +1017,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get walletDepositTitle => 'Dépôt de solde (boutique)';
+
+  @override
+  String get walletWithdrawalTitle => 'Retrait de solde (administration)';
 
   @override
   String walletPaymentTitle(String orderId) {

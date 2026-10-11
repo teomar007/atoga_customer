@@ -6,6 +6,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/product_image.dart';
 import '../../../../core/widgets/quantity_stepper.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/cart_item.dart';
 import '../cart_controller.dart';
 
@@ -20,6 +21,7 @@ class CartItemTile extends ConsumerWidget {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final String lang = Localizations.localeOf(context).languageCode;
     final ThemeData theme = Theme.of(context);
+    final bool frozen = ref.watch(isFrozenProvider);
 
     return Dismissible(
       key: ValueKey<String>(item.productId),
@@ -65,6 +67,7 @@ class CartItemTile extends ConsumerWidget {
                 QuantityStepper(
                   compact: true,
                   quantity: item.quantity,
+                  enabled: !frozen,
                   onIncrement: () => ref.read(cartControllerProvider.notifier).increment(item.productId),
                   onDecrement: () => ref.read(cartControllerProvider.notifier).decrement(item.productId),
                 ),

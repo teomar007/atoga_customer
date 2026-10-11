@@ -233,7 +233,14 @@ class SupabaseAuthRepository implements AuthRepository {
         return user;
       }
       final Map<String, dynamic> row = Map<String, dynamic>.from(rows.first as Map);
-      return user.copyWith(displayName: row['display_name']?.toString(), phone: row['phone']?.toString(), languageCode: row['language_code']?.toString(), walletBalance: double.tryParse('${row['wallet_balance'] ?? ''}') ?? 0);
+      return user.copyWith(
+        displayName: row['display_name']?.toString(),
+        phone: row['phone']?.toString(),
+        languageCode: row['language_code']?.toString(),
+        walletBalance: double.tryParse('${row['wallet_balance'] ?? ''}') ?? 0,
+        isFrozen: row['is_frozen'] == true,
+        frozenReason: row['frozen_reason']?.toString(),
+      );
     } on PostgrestException catch (error) {
       // 42P01 = الجدول غير موجود (لم يُنفَّذ schema.sql بعد).
       debugPrint('get_or_create_my_profile RPC failed (code=${error.code}): ${error.message}');
@@ -248,7 +255,14 @@ class SupabaseAuthRepository implements AuthRepository {
       await _upsertProfile(user.id, <String, dynamic>{'display_name': user.fallbackLabel, 'phone': user.phone});
       return user;
     }
-    return user.copyWith(displayName: rows.first['display_name']?.toString(), phone: rows.first['phone']?.toString(), languageCode: rows.first['language_code']?.toString(), walletBalance: double.tryParse('${rows.first['wallet_balance'] ?? ''}') ?? 0);
+    return user.copyWith(
+      displayName: rows.first['display_name']?.toString(),
+      phone: rows.first['phone']?.toString(),
+      languageCode: rows.first['language_code']?.toString(),
+      walletBalance: double.tryParse('${rows.first['wallet_balance'] ?? ''}') ?? 0,
+      isFrozen: rows.first['is_frozen'] == true,
+      frozenReason: rows.first['frozen_reason']?.toString(),
+    );
   }
 
   Future<CustomerUser?> _readProfile(CustomerUser user) async {

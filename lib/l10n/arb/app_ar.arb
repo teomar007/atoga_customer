@@ -225,11 +225,13 @@
   "statusOnTheWay": "في طريق التوصيل",
   "statusDelivered": "تم التسليم",
   "statusCancelled": "ملغى",
+  "statusReturned": "مرتجع",
   "statusReceivedDesc": "تم استلام طلبك بنجاح",
   "statusPreparingDesc": "فريقنا يجهّز طلبك الآن",
   "statusOnTheWayDesc": "المندوب في طريقه إليك",
   "statusDeliveredDesc": "تم تسليم الطلب. بالهناء والشفاء!",
   "statusCancelledDesc": "تم إلغاء هذا الطلب",
+  "statusReturnedDesc": "لم يتم استلام الطلب وأُعيد إلى المتجر",
   "courierInfo": "المندوب",
   "callCourier": "اتصال",
   "orderDate": "تاريخ الطلب",
@@ -247,6 +249,8 @@
   "@estimatedDelivery": { "placeholders": { "time": { "type": "String" } } },
 
   "profileTitle": "حسابي",
+  "accountFrozenTitle": "تم تجميد حسابك",
+  "accountFrozenBlocked": "لا يمكنك إتمام أي عملية شراء حالياً. للاستفسار تواصل مع الإدارة.",
   "personalInfo": "البيانات الشخصية",
   "editProfile": "تعديل الملف الشخصي",
   "name": "الاسم الكامل",
@@ -323,6 +327,7 @@
   "walletHistoryTitle": "سجل العمليات",
   "walletNoTransactions": "لا توجد حركات بعد",
   "walletDepositTitle": "شحن رصيد من الإدارة",
+  "walletWithdrawalTitle": "سحب رصيد من الإدارة",
   "walletPaymentTitle": "دفع للطلب رقم: #{orderId}",
   "@walletPaymentTitle": {
     "placeholders": {

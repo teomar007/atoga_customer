@@ -260,3 +260,9 @@ final isSignedInProvider = Provider<bool>((Ref ref) => ref.watch(currentUserProv
 /// **بوابة الطلب**: رقم الهاتف مطلوب لإتمام أي طلب توصيل.
 /// مصدر الحقيقة هو جدول `profiles` (وليس Auth)، لأن الهاتف اختياري there.
 final hasDeliveryPhoneProvider = Provider<bool>((Ref ref) => ref.watch(currentUserProvider)?.hasPhone ?? false);
+
+/// هل حساب الزبون مجمّد؟ (يسمح بالدخول لكن يمنع الشراء).
+final isFrozenProvider = Provider<bool>((Ref ref) => ref.watch(currentUserProvider)?.isFrozen ?? false);
+
+/// سبب التجميد المعروض للزبون (إن وُجد).
+final frozenReasonProvider = Provider<String?>((Ref ref) => ref.watch(currentUserProvider)?.frozenReason);

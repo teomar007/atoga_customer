@@ -51,6 +51,17 @@ class Address {
     return shortLabel;
   }
 
+  /// هل يبقى العنوان صالحاً للعرض؟ (منطقته متاحة الآن، أو عنوان قديم بلا منطقة).
+  ///
+  /// إذا كانت منطقة العنوان قد حُذفت/أُخفيت من الإدارة → يُخفى العنوان تلقائياً
+  /// ولا نعرض عبارة «غير محدد».
+  bool isDisplayableWith(List<DeliveryZone> zones) {
+    if ((deliveryZoneId ?? '').trim().isEmpty) {
+      return street.isNotEmpty || building.isNotEmpty || apartment.isNotEmpty;
+    }
+    return zones.any((DeliveryZone z) => z.id == deliveryZoneId);
+  }
+
   Address copyWith({String? label, String? street, String? building, String? apartment, String? deliveryZoneId, String? notes, String? phone, double? latitude, double? longitude, bool? isDefault}) {
     return Address(
       id: id,

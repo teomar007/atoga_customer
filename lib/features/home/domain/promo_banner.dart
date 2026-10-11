@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart' show Alignment, Color;
+
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/bilingual.dart';
 
 /// بانر ترويجي في شريط التمرير العلوي.
@@ -11,6 +14,10 @@ class PromoBanner {
     this.imageUrl,
     this.discountLabel,
     this.targetCategoryId,
+    this.backgroundColor,
+    this.imageAlignX = 0,
+    this.imageAlignY = 0,
+    this.imageScale = 1,
   });
 
   final String id;
@@ -29,6 +36,28 @@ class PromoBanner {
 
   /// عند النقر ينتقل التطبيق لهذا التصنيف (بدل صفحة تفاصيل).
   final String? targetCategoryId;
+
+  /// لون خلفية البانر (hex `#RRGGBB`) عند غياب الصورة — الافتراضي لون العلامة.
+  final String? backgroundColor;
+
+  /// موضع الصورة الأفقي/العمودي داخل الإطار (من -1 إلى 1) وحجمها.
+  final double imageAlignX;
+  final double imageAlignY;
+  final double imageScale;
+
+  /// اللون الفعلي للخلفية: الاختياري إن صحّ، وإلا لون العلامة الأساسي.
+  Color get backgroundValue {
+    final String raw = (backgroundColor ?? '').trim().replaceFirst('#', '');
+    if (raw.length == 6) {
+      final int? v = int.tryParse(raw, radix: 16);
+      if (v != null) {
+        return Color(0xFF000000 | v);
+      }
+    }
+    return AppColors.primary;
+  }
+
+  Alignment get imageAlignment => Alignment(imageAlignX.clamp(-1, 1), imageAlignY.clamp(-1, 1));
 
   /// العنوان باللغة الحالية: الفرنسية إن وُجدت، وإلا الافتراضية (عربية).
   String titleFor(String languageCode) => Bilingual.pick(title, titleFr, languageCode);
@@ -73,6 +102,10 @@ class PromoBanner {
       imageUrl: json['image_url']?.toString(),
       discountLabel: json['discount_label']?.toString(),
       targetCategoryId: json['target_category_id']?.toString(),
+      backgroundColor: json['background_color']?.toString(),
+      imageAlignX: double.tryParse('${json['image_align_x'] ?? 0}') ?? 0,
+      imageAlignY: double.tryParse('${json['image_align_y'] ?? 0}') ?? 0,
+      imageScale: double.tryParse('${json['image_scale'] ?? 1}') ?? 1,
     );
   }
 }

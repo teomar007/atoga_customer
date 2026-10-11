@@ -258,6 +258,8 @@ class AddressListScreen extends ConsumerWidget {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final AddressesState state = ref.watch(addressesControllerProvider);
     final List<DeliveryZone> zones = ref.watch(deliveryZonesProvider).valueOrNull ?? const <DeliveryZone>[];
+    // نُخفي العناوين التي صارت منطقتها غير متاحة (مخفية/محذوفة).
+    final List<Address> items = state.items.where((Address a) => a.isDisplayableWith(zones)).toList();
 
     if (state.loading && state.items.isEmpty) {
       return Scaffold(appBar: AppBar(title: Text(l10n.addresses, maxLines: 1, overflow: TextOverflow.ellipsis)), body: const Center(child: CircularProgressIndicator()));
@@ -277,14 +279,14 @@ class AddressListScreen extends ConsumerWidget {
         icon: const Icon(Icons.add_location_alt_outlined),
         label: Text(l10n.add),
       ),
-      body: state.items.isEmpty
+      body: items.isEmpty
           ? Center(child: Text(l10n.noSavedAddresses, style: Theme.of(context).textTheme.bodyMedium))
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 90),
-              itemCount: state.items.length,
+              itemCount: items.length,
               separatorBuilder: (BuildContext context, int index) => const SizedBox(height: 8),
               itemBuilder: (BuildContext context, int index) {
-                final Address address = state.items[index];
+                final Address address = items[index];
                 final String title = address.titleFor(zones);
                 return Container(
                   padding: const EdgeInsets.all(14),

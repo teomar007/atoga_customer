@@ -183,7 +183,9 @@ class _TransactionTile extends StatelessWidget {
     final String amount = '${deposit ? '+' : '-'}${Formatters.price(transaction.amount.abs(), lang)}';
     final String title = deposit
         ? l10n.walletDepositTitle
-        : l10n.walletPaymentTitle(transaction.orderId ?? '');
+        : (transaction.type == WalletTransactionType.withdrawal
+            ? l10n.walletWithdrawalTitle
+            : l10n.walletPaymentTitle(transaction.orderId ?? ''));
     final String date = Formatters.dateTime(transaction.createdAt, lang);
 
     return Container(
