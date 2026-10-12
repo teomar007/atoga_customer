@@ -235,3 +235,12 @@ flutter build apk --release
    في لوحة Supabase إن استُخدم تسجيل جوجل.
 7. بعد كل تحديث: `flutter analyze` + `flutter test`، ورفع AAB جديد
    (versionCode تصاعدي في `pubspec.yaml`).
+
+## الوثائق — Documentation
+
+- [`docs/DEPENDENCIES.md`](docs/DEPENDENCIES.md) — الاعتماديات (تُولَّد تلقائياً) — Dependencies (auto).
+- [`docs/STRUCTURE.md`](docs/STRUCTURE.md) — بنية الكود (تلقائي) — Code structure (auto).
+- [`docs/SCREENS.md`](docs/SCREENS.md) — الشاشات (تلقائي) — Screens (auto).
+- [`docs/FEATURES.md`](docs/FEATURES.md) — الميزات (يدوية) — Features (manual).
+- الوثيقة المركزية للمنظومة: `https://teomar007.github.io/atouga-admin-panel/docs/ATOGA_SYSTEM_DOCUMENTATION.html`
+- إعادة توليد الوثائق الآلية: `dart run tool/generate_docs.dart`.
