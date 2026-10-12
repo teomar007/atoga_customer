@@ -41,6 +41,7 @@ class AuthStateView {
 
 class AuthController extends Notifier<AuthStateView> {
   StreamSubscription<CustomerUser?>? _subscription;
+  StreamSubscription<CustomerUser>? _profileSub;
   StreamSubscription<String?>? _pushSub;
 
   @override
@@ -48,6 +49,10 @@ class AuthController extends Notifier<AuthStateView> {
     final AuthRepository repo = ref.watch(authRepositoryProvider);
     final CustomerUser? cached = repo.currentUser;
     _subscription = repo.authStateChanges().listen(_onUserChanged);
+    // بثّ حي للملف الشخصي: يعكس التجميد/رفع التجميد فوراً دون إعادة تشغيل.
+    if (cached != null) {
+      _listenProfile(repo);
+    }
     // بمجرد توفر رمز FCM (أو تغيّره) يُربط بالحساب الحالي.
     _pushSub = FcmService.instance.tokenEvents.listen((String? token) {
       if (token != null && token.isNotEmpty) {
@@ -55,6 +60,7 @@ class AuthController extends Notifier<AuthStateView> {
       }
     });
     ref.onDispose(() => _subscription?.cancel());
+    ref.onDispose(() => _profileSub?.cancel());
     ref.onDispose(() => _pushSub?.cancel());
     // اتجاه الكتابة: أي تغيير للغة أثناء تسجيل الدخول يُحفظ في profiles.
     ref.listen<Locale>(localeControllerProvider, (Locale? previous, Locale next) => _pushLanguage(next.languageCode));
@@ -93,6 +99,26 @@ class AuthController extends Notifier<AuthStateView> {
 
   void _onUserChanged(CustomerUser? user) {
     state = state.copyWith(status: user == null ? const AuthGuest() : AuthAuthenticated(user));
+    if (user == null) {
+      _profileSub?.cancel();
+      _profileSub = null;
+    } else {
+      _listenProfile(ref.read(authRepositoryProvider));
+    }
+  }
+
+  /// يتابع صف `profiles` الحالي ويحدّث الحالة (التجميد/الرصيد/اللغة...) لحظياً.
+  void _listenProfile(AuthRepository repo) {
+    _profileSub?.cancel();
+    _profileSub = repo.watchMyProfile().listen(
+      (CustomerUser full) {
+        final AuthStatus current = state.status;
+        if (current is AuthAuthenticated && current.user.id == full.id) {
+          state = state.copyWith(status: AuthAuthenticated(full));
+        }
+      },
+      onError: (Object error) => debugPrint('watchMyProfile: $error'),
+    );
   }
 
   void clearError() {
@@ -175,6 +201,8 @@ class AuthController extends Notifier<AuthStateView> {
     // تصفير رمز FCM قبل مسح الجلسة (يحتاج المستخدم الحالي) حتى لا تصل
     // إشعارات شخصية لشخص آخر يستخدم نفس الهاتف.
     await _syncFcmToken(null);
+    await _profileSub?.cancel();
+    _profileSub = null;
     await ref.read(authRepositoryProvider).signOut();
     state = const AuthStateView(status: AuthGuest());
   }

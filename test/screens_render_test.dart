@@ -121,6 +121,9 @@ class _FakeAuthRepo implements AuthRepository {
   Future<CustomerUser> refreshProfile() async => _user ?? CustomerUser(id: 'x');
 
   @override
+  Stream<CustomerUser> watchMyProfile() => const Stream<CustomerUser>.empty();
+
+  @override
   Future<CustomerUser> updateProfile({String? displayName, String? phone}) async => _user ?? CustomerUser(id: 'x');
 }
 
@@ -249,6 +252,9 @@ class _FakeOrderRepository implements OrderRepository {
 
   @override
   Stream<Order> watchOrder(String id) => _watch;
+
+  @override
+  Stream<int> watchMyRealtimeChanges() => Stream<int>.empty();
 
   @override
   Future<bool> cancelOrder(String id) async {

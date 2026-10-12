@@ -106,24 +106,113 @@ class CategoryRail extends ConsumerWidget {
   }
 
   /// خريطة الأيقونة: يُخزَّن الاسم في قاعدة البيانات ويرسم هنا.
-  static IconData iconFor(String? name) {
-    switch (name) {
-      case 'lunch_dining':
-        return Icons.lunch_dining_rounded;
-      case 'local_drink':
-        return Icons.local_drink_rounded;
-      case 'egg_alt':
-        return Icons.egg_alt_rounded;
-      case 'grain':
-        return Icons.grain_rounded;
-      case 'cookie':
-        return Icons.cookie_rounded;
-      case 'cleaning':
-        return Icons.cleaning_services_rounded;
-      case 'bakery_dining':
-        return Icons.bakery_dining_rounded;
-      default:
-        return Icons.grid_view_rounded;
-    }
-  }
+  /// يجب أن تطابق أسماء `kCategoryIcons` في تطبيق المدير.
+  static IconData iconFor(String? name) => _icons[name] ?? Icons.grid_view_rounded;
+
+  static const Map<String, IconData> _icons = <String, IconData>{
+    // تسوّق ومتاجر
+    'shopping_basket': Icons.shopping_basket,
+    'shopping_cart': Icons.shopping_cart,
+    'shopping_bag': Icons.shopping_bag,
+    'storefront': Icons.storefront,
+    'store': Icons.store,
+    'local_grocery_store': Icons.local_grocery_store,
+    'local_convenience_store': Icons.local_convenience_store,
+    'local_mall': Icons.local_mall,
+    // مطاعم ووجبات
+    'restaurant': Icons.restaurant,
+    'restaurant_menu': Icons.restaurant_menu,
+    'local_dining': Icons.local_dining,
+    'lunch_dining': Icons.lunch_dining,
+    'dinner_dining': Icons.dinner_dining,
+    'breakfast_dining': Icons.breakfast_dining,
+    'brunch_dining': Icons.brunch_dining,
+    'fastfood': Icons.fastfood,
+    'local_pizza': Icons.local_pizza,
+    'takeout_dining': Icons.takeout_dining,
+    'room_service': Icons.room_service,
+    // لحوم وأسماك
+    'kebab_dining': Icons.kebab_dining,
+    'outdoor_grill': Icons.outdoor_grill,
+    'set_meal': Icons.set_meal,
+    // نشويات
+    'ramen_dining': Icons.ramen_dining,
+    'rice_bowl': Icons.rice_bowl,
+    'soup_kitchen': Icons.soup_kitchen,
+    'grain': Icons.grain,
+    // مخبوزات وحلويات
+    'bakery_dining': Icons.bakery_dining,
+    'cake': Icons.cake,
+    'icecream': Icons.icecream,
+    'cookie': Icons.cookie,
+    // خضار وفواكه وفلاحة
+    'grass': Icons.grass,
+    'agriculture': Icons.agriculture,
+    'local_florist': Icons.local_florist,
+    'eco': Icons.eco,
+    'park': Icons.park,
+    'nature': Icons.nature,
+    'filter_vintage': Icons.filter_vintage,
+    // ألبان وبيض
+    'egg': Icons.egg,
+    'egg_alt': Icons.egg_alt,
+    // مشروبات
+    'local_drink': Icons.local_drink,
+    'local_cafe': Icons.local_cafe,
+    'coffee': Icons.coffee,
+    'coffee_maker': Icons.coffee_maker,
+    'emoji_food_beverage': Icons.emoji_food_beverage,
+    'local_bar': Icons.local_bar,
+    'sports_bar': Icons.sports_bar,
+    'liquor': Icons.liquor,
+    'wine_bar': Icons.wine_bar,
+    'water_drop': Icons.water_drop,
+    'water': Icons.water,
+    'ac_unit': Icons.ac_unit,
+    // مطبخ وأدوات
+    'kitchen': Icons.kitchen,
+    'blender': Icons.blender,
+    'microwave': Icons.microwave,
+    'countertops': Icons.countertops,
+    // منظفات
+    'cleaning_services': Icons.cleaning_services,
+    'cleaning': Icons.cleaning_services,
+    'soap': Icons.soap,
+    'local_laundry_service': Icons.local_laundry_service,
+    'dishwasher': Icons.wash,
+    'dry_cleaning': Icons.dry_cleaning,
+    'wash': Icons.wash,
+    'sanitizer': Icons.sanitizer,
+    'recycle': Icons.loop,
+    // أطفال وصحة وعناية
+    'child_friendly': Icons.child_friendly,
+    'child_care': Icons.child_care,
+    'face': Icons.face,
+    'spa': Icons.spa,
+    'health_and_safety': Icons.health_and_safety,
+    'medical_services': Icons.medical_services,
+    'medication': Icons.medication,
+    'vaccines': Icons.vaccines,
+    'local_pharmacy': Icons.local_pharmacy,
+    // حيوانات ومنزل
+    'pets': Icons.pets,
+    'home': Icons.home,
+    'house': Icons.house,
+    'dining': Icons.dining,
+    'chair': Icons.chair,
+    'bed': Icons.bed,
+    'light': Icons.light,
+    'bolt': Icons.bolt,
+    // متفرقات
+    'local_shipping': Icons.local_shipping,
+    'delivery_dining': Icons.delivery_dining,
+    'card_giftcard': Icons.card_giftcard,
+    'redeem': Icons.redeem,
+    'celebration': Icons.celebration,
+    'toys': Icons.toys,
+    'sports_esports': Icons.sports_esports,
+    'menu_book': Icons.menu_book,
+    'palette': Icons.palette,
+    'brush': Icons.brush,
+  };
 }

@@ -11,6 +11,7 @@ class OrderItem {
     this.nameFr,
     this.imageUrl,
     this.unit,
+    this.isAvailable = true,
   });
 
   final String productId;
@@ -21,13 +22,16 @@ class OrderItem {
   final String? imageUrl;
   final String? unit;
 
+  /// يضبطها المجهّز من تطبيق السائق: false = نفد المخزون (يُعرض شارة للزبون).
+  final bool isAvailable;
+
   double get lineTotal => price * quantity;
 
   /// اسم المنتج باللغة الحالية عند عرض الطلب.
   String nameFor(String languageCode) => Bilingual.pick(name, nameFr, languageCode);
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
-    return OrderItem(productId: '${json['product_id'] ?? ''}', name: '${json['name'] ?? ''}', nameFr: json['name_fr']?.toString(), price: _toDouble(json['price']), quantity: _toInt(json['quantity']), imageUrl: json['image_url']?.toString(), unit: json['unit']?.toString());
+    return OrderItem(productId: '${json['product_id'] ?? ''}', name: '${json['name'] ?? ''}', nameFr: json['name_fr']?.toString(), price: _toDouble(json['price']), quantity: _toInt(json['quantity']), imageUrl: json['image_url']?.toString(), unit: json['unit']?.toString(), isAvailable: json['is_available'] != false);
   }
 
   static double _toDouble(Object? value) {

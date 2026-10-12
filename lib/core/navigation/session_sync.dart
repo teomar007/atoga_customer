@@ -56,6 +56,8 @@ class _SessionSyncState extends ConsumerState<SessionSync> with WidgetsBindingOb
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.invalidate(deliveryZonesProvider);
+      // أعد قراءة الملف الشخصي لاكتشاف التجميد/رفع التجميد عند العودة للتطبيق.
+      unawaited(ref.read(authControllerProvider.notifier).reloadProfile());
     }
   }
 

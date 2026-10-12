@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -26,42 +24,21 @@ class OrderTrackingScreen extends ConsumerStatefulWidget {
 
 class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
   bool _cancelling = false;
-  StreamSubscription<Order>? _subscription;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startWatch());
-  }
-
-  /// بدء التتبع الحي وإمساك الاشتراك لإلغائه في [dispose].
-  void _startWatch() {
-    if (!mounted) {
-      return;
-    }
-    _subscription = ref.read(ordersControllerProvider.notifier).watch(widget.orderId);
-  }
-
-  @override
-  void dispose() {
-    // إلغاء الاشتراك مباشرةً: قراءة `ref` داخل dispose() ممنوعة في Riverpod.
-    _subscription?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
+    // أي تغيّر (حالة الطلب أو عناصر الفاتورة من تطبيق المجهّز) يُعيد الجلب فوراً.
+    ref.listen(ordersRealtimeProvider, (_, _) {
+      ref.invalidate(orderDetailProvider(widget.orderId));
+    });
     final AsyncValue<Order> async = ref.watch(orderDetailProvider(widget.orderId));
     return Scaffold(
       appBar: AppBar(title: Text(l10n.trackingTitle, maxLines: 1, overflow: TextOverflow.ellipsis)),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object error, StackTrace stack) => ErrorStateView(title: l10n.ordersLoadFailed, message: l10n.noInternetBody, retryLabel: l10n.retry, onRetry: () => ref.invalidate(orderDetailProvider(widget.orderId))),
-        data: (Order fetched) {
-          // الأولوية للتحديث الحي إن وصل.
-          final OrdersState list = ref.watch(ordersControllerProvider);
-          final Order order = list.orders.firstWhere((Order o) => o.id == widget.orderId, orElse: () => fetched);
+        data: (Order order) {
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(orderDetailProvider(widget.orderId)),
             child: ListView(
@@ -192,14 +169,58 @@ class _InvoiceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool available = item.isAvailable;
+    final Color textColor = available
+        ? Theme.of(context).colorScheme.onSurface
+        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
           SizedBox(width: 44, height: 44, child: ProductImage(url: item.imageUrl, borderRadius: BorderRadius.circular(8))),
           const SizedBox(width: 10),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(item.nameFor(lang), maxLines: 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium), Text('${l10nQty(item.quantity)} × ${Formatters.price(item.price, lang)}', style: Theme.of(context).textTheme.bodySmall)])),
-          Text(Formatters.price(item.lineTotal, lang), style: Theme.of(context).textTheme.titleSmall),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.nameFor(lang),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: textColor,
+                        decoration: available ? null : TextDecoration.lineThrough,
+                      ),
+                ),
+                Text(
+                  '${l10nQty(item.quantity)} × ${Formatters.price(item.price, lang)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: textColor),
+                ),
+                if (!available)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE53935).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        lang == 'fr' ? 'Rupture de stock' : 'نفد المخزون',
+                        style: const TextStyle(color: Color(0xFFC62828), fontWeight: FontWeight.w700, fontSize: 11),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Text(
+            Formatters.price(item.lineTotal, lang),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: textColor,
+                  decoration: available ? null : TextDecoration.lineThrough,
+                ),
+          ),
         ],
       ),
     );

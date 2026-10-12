@@ -202,7 +202,10 @@ class CheckoutController extends Notifier<CheckoutState> {
       return null;
     }
     try {
-      final String id = await ref.read(orderRepositoryProvider).createOrder(NewOrderPayload(address: address.toJson(), items: items, subtotal: totals.subtotal, discount: totals.discount, deliveryFee: totals.delivery, total: totals.total, couponCode: couponCode, paymentMethod: paymentMethod.wire));
+      final List<DeliveryZone> zones = ref.read(deliveryZonesProvider).valueOrNull ?? const <DeliveryZone>[];
+      final String? zoneId = address.deliveryZoneId;
+      final String? zoneName = zoneNameFor(zones, zoneId);
+      final String id = await ref.read(orderRepositoryProvider).createOrder(NewOrderPayload(address: address.toJson(), items: items, subtotal: totals.subtotal, discount: totals.discount, deliveryFee: totals.delivery, total: totals.total, couponCode: couponCode, paymentMethod: paymentMethod.wire, deliveryZoneId: zoneId, deliveryZoneName: zoneName));
       await ref.read(cartControllerProvider.notifier).clear();
       // رصيد المحفظة وسجلها تغيّرا بعد دفع ناجح — أعد قراءتهما فوراً.
       if (paymentMethod == PaymentMethod.wallet) {

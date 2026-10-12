@@ -52,6 +52,9 @@ abstract interface class AuthRepository {
   /// لا تصل اللغة والتفضيلات المخزّنة في الخادم إلى التطبيق.
   Future<CustomerUser> refreshProfile();
 
+  /// بثّ حي لصف الملف الشخصي للمستخدم الحالي (يُطبّق التجميد فوراً).
+  Stream<CustomerUser> watchMyProfile();
+
   /// يحفظ لغة المستخدم في `profiles.language_code` لتعود بعد أي دخول
   /// أو على جهاز آخر. الاستيراد يتم عبر قراءة الملف الشخصي.
   Future<void> saveLanguage(String languageCode);

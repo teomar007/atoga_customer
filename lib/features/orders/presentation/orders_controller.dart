@@ -94,6 +94,11 @@ final orderRepositoryProvider = Provider<OrderRepository>((Ref ref) => SupabaseO
 
 final ordersControllerProvider = NotifierProvider<OrdersController, OrdersState>(OrdersController.new);
 
+/// بثّ حي لأي تغيّر في طلبات الزبون/عناصرها — تُبنى عليه إعادة التحميل الفورية.
+final ordersRealtimeProvider = StreamProvider.autoDispose<int>(
+  (Ref ref) => ref.watch(orderRepositoryProvider).watchMyRealtimeChanges(),
+);
+
 /// نتيجة محاولة إلغاء الطلب: نجح الإلغاء، رُفض لأن الحالة تغيّرت في الخادم
 /// (بدأ التجهيز/التوصيل)، أو فشل الاتصال.
 enum CancelOrderOutcome { cancelled, statusChanged, failed }

@@ -224,6 +224,36 @@ class SupabaseAuthRepository implements AuthRepository {
     return _cache(await _withProfile(base));
   }
 
+  @override
+  Stream<CustomerUser> watchMyProfile() {
+    final String? userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      return Stream<CustomerUser>.empty();
+    }
+    return _client
+        .from('profiles')
+        .stream(primaryKey: <String>['id'])
+        .eq('id', userId)
+        .map((List<Map<String, dynamic>> rows) {
+      final CustomerUser base = _map(_client.auth.currentUser) ?? CustomerUser(id: userId);
+      if (rows.isEmpty) {
+        return base;
+      }
+      final Map<String, dynamic> row = rows.first;
+      final String? reason = row['frozen_reason']?.toString();
+      final bool hasReason = reason != null && reason.trim().isNotEmpty;
+      return _cache(base.copyWith(
+        displayName: row['display_name']?.toString(),
+        phone: row['phone']?.toString(),
+        languageCode: row['language_code']?.toString(),
+        walletBalance: double.tryParse('${row['wallet_balance'] ?? ''}') ?? 0,
+        isFrozen: row['is_frozen'] == true,
+        frozenReason: hasReason ? reason : null,
+        clearFrozenReason: !hasReason,
+      ));
+    });
+  }
+
   /// يضمن وجود صف في `profiles` عبر دالة `get_or_create_my_profile`
   /// (SECURITY DEFINER) — works حتى لو لم يكن الـ trigger موجوداً.
   Future<CustomerUser> ensureProfile(CustomerUser user) async {

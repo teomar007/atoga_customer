@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../cart/domain/cart_item.dart';
@@ -5,7 +7,7 @@ import '../domain/order.dart';
 
 /// إنشاء طلب جديد مع عناصره (نفس العملية المعاملاتية).
 class NewOrderPayload {
-  const NewOrderPayload({required this.address, required this.items, required this.subtotal, required this.discount, required this.deliveryFee, required this.total, this.couponCode, this.paymentMethod = 'cod'});
+  const NewOrderPayload({required this.address, required this.items, required this.subtotal, required this.discount, required this.deliveryFee, required this.total, this.couponCode, this.paymentMethod = 'cod', this.deliveryZoneId, this.deliveryZoneName});
 
   final Map<String, dynamic> address;
   final List<CartItem> items;
@@ -17,6 +19,10 @@ class NewOrderPayload {
 
   /// `cod` (الدفع عند الاستلام) أو `wallet` (خصم من المحفظة عبر RPC آمن).
   final String paymentMethod;
+
+  /// منطقة التوصيل (الحي) التي اختارها الزبون — تُعرض لطاقم التوصيل.
+  final String? deliveryZoneId;
+  final String? deliveryZoneName;
 }
 
 abstract interface class OrderRepository {
@@ -28,6 +34,9 @@ abstract interface class OrderRepository {
 
   /// بثّ حي لتغيّر حالة طلب (Sprint 5).
   Stream<Order> watchOrder(String id);
+
+  /// بثّ حي لأي تغيّر في طلبات الزبون أو عناصرها (للتحديث الفوري للفاتورة).
+  Stream<int> watchMyRealtimeChanges();
 
   Future<bool> cancelOrder(String id);
 }
@@ -72,6 +81,8 @@ class SupabaseOrderRepository implements OrderRepository {
       'coupon_code': payload.couponCode,
       'payment_method': payload.paymentMethod,
       'status': 'received',
+      'delivery_zone_id': payload.deliveryZoneId,
+      'delivery_zone_name': payload.deliveryZoneName,
     }).select().limit(1);
 
     if (inserted.isEmpty) {
@@ -106,6 +117,8 @@ class SupabaseOrderRepository implements OrderRepository {
       'p_delivery_fee': payload.deliveryFee,
       'p_total': payload.total,
       'p_coupon_code': payload.couponCode,
+      'p_delivery_zone_id': payload.deliveryZoneId,
+      'p_delivery_zone_name': payload.deliveryZoneName,
       'p_items': payload.items.map((CartItem item) => <String, dynamic>{
         'product_id': item.productId,
         'name': item.name,
@@ -146,12 +159,44 @@ class SupabaseOrderRepository implements OrderRepository {
   @override
   Stream<Order> watchOrder(String id) async* {
     await for (final SupabaseStreamEvent rows in _client.from('orders').stream(primaryKey: <String>['id'])) {
-      for (final Map<String, dynamic> row in rows) {
-        if ('${row['id']}' == id) {
-          yield Order.fromJson(row);
-        }
+      final bool present = rows.any((Map<String, dynamic> row) => '${row['id']}' == id);
+      if (!present) {
+        continue;
+      }
+      // نعيد الجلب الكامل ليشمل العناصر المحدّثة وإجمالي الفاتورة الجديد
+      // (تعديل المجهّز لتوفر المنتجات يحدّث orders.subtotal/total و order_items).
+      yield await fetchOrder(id);
+    }
+  }
+
+  @override
+  Stream<int> watchMyRealtimeChanges() {
+    final StreamController<int> controller = StreamController<int>();
+    int ticks = 0;
+
+    void emit(List<Map<String, dynamic>> _) {
+      if (!controller.isClosed) {
+        controller.add(++ticks);
       }
     }
+
+    void onError(Object error, StackTrace stack) {
+      if (!controller.isClosed) {
+        controller.addError(error, stack);
+      }
+    }
+
+    final List<StreamSubscription<dynamic>> subs = <StreamSubscription<dynamic>>[
+      _client.from('orders').stream(primaryKey: <String>['id']).listen(emit, onError: onError),
+      _client.from('order_items').stream(primaryKey: <String>['id']).listen(emit, onError: onError),
+    ];
+
+    controller.onCancel = () async {
+      for (final StreamSubscription<dynamic> sub in subs) {
+        await sub.cancel();
+      }
+    };
+    return controller.stream;
   }
 
   @override

@@ -37,6 +37,11 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final OrdersState state = ref.watch(ordersControllerProvider);
 
+    // تحديث فوري لقائمة الطلبات عند أي تغيّر من الخادم (تجهيز/تعديل الفاتورة).
+    ref.listen(ordersRealtimeProvider, (_, _) {
+      ref.read(ordersControllerProvider.notifier).load();
+    });
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.ordersTitle, maxLines: 1, overflow: TextOverflow.ellipsis)),
       body: _body(context, l10n, state),
